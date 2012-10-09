@@ -1,0 +1,44 @@
+<h1>PostgreSQL varint extension</h1>
+
+<p>Storing data as a uint64 provides a net storage savings for most data. For
+example, unlike normal 64 bit binary encoding, values between 0 and 127
+consume only one byte of storage on disk.</p>
+
+<p>For values between <code>0</code> and <code>562,949,953,421,311</code>
+(<code>0x1ffffffffffff</code>, a.k.a. 2<sup>49</sup> -
+1), <code>uint64</code> will save anywhere between 1-7 bytes of storage.</p>
+
+<p>For values between <code>562,949,953,421,312</code>
+(<code>0x2000000000000</code>, a.k.a. 2<sup>49</sup>)
+and <code>72,057,594,037,927,935</code> (<code>0xffffffffffffff</code>,
+a.k.a. 2<sup>56</sup> - 1) the space savings is a wash.</p>
+
+<p>For values greater than <code>72,057,594,037,927,936</code>
+(<code>0x100000000000000</code>, 2<sup>56</sup>) and less than 2<sup>64</sup>
+- 1, the space savings costs an extra 1-2 bytes.</p>
+
+<table>
+  <tr>
+    <th>Bytes Consumed</th>
+    <th>Minimum Value</th>
+    <th>Maximum Value</th>
+  </tr>
+  <tr><td>1 byte</td><td>0</td><td>127</td></tr>
+  <tr><td>2 bytes</td><td>128</td><td>16383</td></tr>
+  <tr><td>3 bytes</td><td>16384</td><td>2097151</td></tr>
+  <tr><td>4 bytes</td><td>2097152</td><td>268435455</td></tr>
+  <tr><td>5 bytes</td><td>268435456</td><td>34359738367</td></tr>
+  <tr><td>6 bytes</td><td>34359738368</td><td>4398046511103</td></tr>
+  <tr><td>7 bytes</td><td>4398046511104</td><td>562949953421311</td></tr>
+  <tr><td>8 bytes</td><td>562949953421312</td><td>72057594037927935</td></tr>
+  <tr><td>9 bytes</td><td>72057594037927936</td><td>9223372036854775807</td></tr>
+  <tr><td>10 bytes</td><td>9223372036854775808</td><td>18446744073709551615</td></tr>
+</table>
+
+<p>For most people, there is probably a large net savings for on-disk storage
+as a result of using varint encoding.</p>
+
+<p><b>NOTE</b>: The space savings and encoding mentioned
+above <u><i>excludes</i></u> the space overhead from
+PostgreSQL's <a href="http://www.postgresql.org/docs/current/static/storage-toast.html">VARLENA</a>
+representation.</p>
