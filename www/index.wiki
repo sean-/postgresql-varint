@@ -42,3 +42,7 @@ as a result of using varint encoding.</p>
 above <u><i>excludes</i></u> the space overhead from
 PostgreSQL's <a href="http://www.postgresql.org/docs/current/static/storage-toast.html">VARLENA</a>
 representation.</p>
+
+<p>For additional information about varint encoding, see Google's <a
+href="https://developers.google.com/protocol-buffers/docs/encoding#varints">Protobuf
+encoding documentation</a>.</p>
