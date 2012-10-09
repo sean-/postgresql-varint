@@ -15,30 +15,12 @@
 
 #include "varint.h"
 
-/*
- * TODO:
- *
- * 1) Add signed int64 support
- * 2) Add unsigned uint32 support
- * 3) Add signed int32 support
- * 4) Add unsigned uint128_t support
- * 5) Add signed int128_t support
- *
- * Wishlist:
- *
- * 6) Add NUMERIC support
- * 7) Add float support
- */
-
 void
 varint_to_uint64(const char* buf, const size_t buflen, uint64_t* out, size_t* consumed) {
   const char* ptr = buf;
   uint64_t b;
   /* According to Google, splitting into 32-bit pieces gives better
-   * performace on 32-bit processors.
-   *
-   * TODO: Perform some microbenchmarks to see if it's worth using 64bit
-   * integer math and then push optimized code behind an #ifdef block. */
+   * performace on 32-bit processors. */
   uint32_t part0 = 0, part1 = 0, part2 = 0;
 
   if (buflen <  1) goto err; b = *(ptr++); part0  = (b & 0x7F);       if (!(b & 0x80)) goto done;
