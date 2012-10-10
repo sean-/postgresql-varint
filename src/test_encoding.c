@@ -28,7 +28,45 @@ typedef struct {
 
 
 int
-test_record(const test_record_t* rec) {
+test_record32(const test_record_t* rec) {
+  const size_t buflen = 5;
+  char buf[buflen];
+  size_t outlen = 0;
+  uint32_to_varint((uint32_t)rec->num, buflen, buf, &outlen);
+  if (outlen != rec->consumed) {
+    fprintf(stderr, "Incorrect byte length %zu (expected %zu) for input %llx\n", outlen, rec->consumed, rec->num);
+    return 1;
+  }
+
+  int failed = 0;
+  for (size_t i = 0; i < outlen; ++i) {
+    if (rec->nibbles[i] == buf[i]) {
+      /* Good */
+    } else {
+      if (failed == 0) printf("  { %20x, %2zu, {", (uint32_t)rec->num, outlen);
+      printf(" 0x%02hhX,", buf[i]);
+      ++failed;
+    }
+  }
+  if (failed) {
+    printf(" } },\n");
+    return failed;
+  }
+
+  uint32_t dst = 0;
+  size_t consumed = 0;
+  varint_to_uint32(buf, buflen, &dst, &consumed);
+  if (consumed != rec->consumed) {
+    fprintf(stderr, "Incorrect number of bytes consumed: %zu\n", consumed);
+    return 1;
+  }
+
+  return 0;
+}
+
+
+int
+test_record64(const test_record_t* rec) {
   const size_t buflen = 10;
   char buf[buflen];
   size_t outlen = 0;
@@ -279,7 +317,16 @@ main(int argc, char* argv[]) {
   if (argc == 1) {
     int failed = 0;
     for (int i = 0; test_records_good[i].consumed; ++i) {
-      failed += test_record(&test_records_good[i]);
+      if (test_records_good[i].num > UINT32_MAX)
+        continue;
+
+      failed += test_record32(&test_records_good[i]);
+      if (failed)
+        break;
+    }
+
+    for (int i = 0; test_records_good[i].consumed; ++i) {
+      failed += test_record64(&test_records_good[i]);
       if (failed)
         break;
     }
