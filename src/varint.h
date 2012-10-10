@@ -42,6 +42,24 @@
 #include <unistd.h>
 
 /*!
+ * Encode a uint32_t on a preallocated buffer
+ * @param[in]      in The uint32_t input
+ * @param[in]   bufsz The size of the buffer being used to serialize \$in
+ * @param[out]    buf The output buffer for the serialized uint32_t \var value
+ * @param[out] buflen The amount of buffer consumed
+ */
+void uint32_to_varint(const uint32_t in, const size_t bufsz, char* buf, size_t* buflen);
+
+/*!
+ * Converts the varint encoded unsigned integer back to a uint32_t
+ * @param[in]      in The uint32_t input
+ * @param[in]   bufsz The size of the buffer being used to serialize \$in
+ * @param[out]    buf The output buffer for the serialized uint32_t \var value
+ * @param[out] buflen The amount of buffer consumed
+ */
+void varint_to_uint32(const char* buf, const size_t bufsz, uint32_t* out, size_t* consumed);
+
+/*!
  * Encode a uint64_t on a preallocated buffer
  * @param[in]      in The uint64_t input
  * @param[in]   bufsz The size of the buffer being used to serialize \$in

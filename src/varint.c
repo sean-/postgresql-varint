@@ -15,6 +15,82 @@
 
 #include "varint.h"
 
+static const int kMaxVarint32Bytes = 5;
+static const int kMaxVarint64Bytes = 10;
+
+void
+varint_to_uint32(const char* buf, const size_t buflen, uint32_t* out, size_t* consumed) {
+  const char* ptr = buf;
+  uint32_t b;
+  uint32_t result;
+
+  if (buflen <  1) goto err; b = *(ptr++); result  = (b & 0x7F);       if (!(b & 0x80)) goto done;
+  if (buflen <  2) goto err; b = *(ptr++); result |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
+  if (buflen <  3) goto err; b = *(ptr++); result |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
+  if (buflen <  4) goto err; b = *(ptr++); result |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
+  if (buflen <  5) goto err; b = *(ptr++); result |= (b & 0x7F) << 28; if (!(b & 0x80)) goto done;
+
+  // If the input is larger than 32 bits, we still need to read it all
+  // and discard the high-order bits.
+  for (int i = 0; i < kMaxVarint64Bytes - kMaxVarint32Bytes; i++) {
+    b = *(ptr++); if (!(b & 0x80)) goto done;
+  }
+
+  /* Buffer over run: the max size of a varint encoded uint32_t is 5 bytes. */
+  goto err;
+done:
+  *consumed = ptr - buf;
+  *out = result;
+  return;
+err:
+  *consumed = 0;
+  return;
+}
+
+
+void
+uint32_to_varint(const uint32_t in, const size_t buflen, char* buf, size_t* output_len) {
+  if (buflen >= kMaxVarint32Bytes) {
+    buf[0] = (unsigned char)(in | 0x80);
+
+    if (in >= (1 << 7)) {
+      buf[1] = (unsigned char)((in >>  7) | 0x80);
+      if (in >= (1 << 14)) {
+        buf[2] = (unsigned char)((in >> 14) | 0x80);
+        if (in >= (1 << 21)) {
+          buf[3] = (unsigned char)((in >> 21) | 0x80);
+          if (in >= (1 << 28)) {
+            buf[4] = (unsigned char)(in >> 28);
+            *output_len = 5;
+            return;
+          } else {
+            buf[3] &= 0x7F;
+            *output_len = 4;
+            return;
+          }
+        } else {
+          buf[2] &= 0x7F;
+          *output_len = 3;
+          return;
+        }
+      } else {
+        buf[1] &= 0x7F;
+        *output_len = 2;
+        return;
+      }
+    } else {
+      buf[0] &= 0x7F;
+      *output_len = 1;
+      return;
+    }
+  }
+
+  /* Conversion failed */
+  *output_len = 0;
+  return;
+}
+
+
 void
 varint_to_uint64(const char* buf, const size_t buflen, uint64_t* out, size_t* consumed) {
   const char* ptr = buf;
@@ -35,6 +111,7 @@ varint_to_uint64(const char* buf, const size_t buflen, uint64_t* out, size_t* co
   if (buflen < 10) goto err; b = *(ptr++); part2 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
 
   /* Buffer over run: the max size of a varint encoded uint64_t is 10 bytes. */
+  goto err;
 done:
   *consumed = ptr - buf;
   *out = (part0 | ((uint64_t)(part1) << 28) | ((uint64_t)(part2) << 56));
@@ -104,6 +181,6 @@ uint64_to_varint(const uint64_t in, const size_t buflen, char* buf, size_t* outp
   *output_len = sz;
   return;
 error:
-  output_len = 0;
+  *output_len = 0;
   return;
 }
