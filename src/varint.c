@@ -10,47 +10,61 @@
  * Encoding method used is based on original Protocol Buffers design by
  * Sanjay Ghemawat, Jeff Dean, and others.
  *
+ * ZigZag transofmrations by Chris Atenasio <atenasio@google.com>
+ *
  * See ../COPYING for additional copyright and license information.
  */
 
 #include "varint.h"
 
-static const int kMaxVarint32Bytes = 5;
-static const int kMaxVarint64Bytes = 10;
+static const int MAX_VARINT32_BYTES = 5;
+static const int MAX_VARINT64_BYTES = 10;
+
+
+
+static inline int32_t zigzag_decode32(const uint32_t n) {
+  return (n >> 1) ^ -((int32_t)(n & 1));
+}
+
+
+
+static inline inline uint32_t zigzag_encode32(const int32_t n) {
+  // Note:  the right-shift must be arithmetic
+  return (n << 1) ^ (n >> 31);
+}
+
+
+
+static inline uint64_t zigzag_encode64(const int64_t n) {
+  // Note:  the right-shift must be arithmetic
+  return (n << 1) ^ (n >> 63);
+}
+
+
+
+static inline int64_t zigzag_decode64(const uint64_t n) {
+  return (n >> 1) ^ -((int64_t)(n & 1));
+}
+
+
 
 void
-varint_to_uint32(const char* buf, const size_t buflen, uint32_t* out, size_t* consumed) {
-  const char* ptr = buf;
-  uint32_t b;
-  uint32_t result;
-
-  if (buflen <  1) goto err; b = *(ptr++); result  = (b & 0x7F);       if (!(b & 0x80)) goto done;
-  if (buflen <  2) goto err; b = *(ptr++); result |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
-  if (buflen <  3) goto err; b = *(ptr++); result |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
-  if (buflen <  4) goto err; b = *(ptr++); result |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
-  if (buflen <  5) goto err; b = *(ptr++); result |= (b & 0x7F) << 28; if (!(b & 0x80)) goto done;
-
-  // If the input is larger than 32 bits, we still need to read it all
-  // and discard the high-order bits.
-  for (int i = 0; i < kMaxVarint64Bytes - kMaxVarint32Bytes; i++) {
-    b = *(ptr++); if (!(b & 0x80)) goto done;
-  }
-
-  /* Buffer over run: the max size of a varint encoded uint32_t is 5 bytes. */
-  goto err;
-done:
-  *consumed = ptr - buf;
-  *out = result;
-  return;
-err:
-  *consumed = 0;
-  return;
+int32_to_varint(const int32_t in, const size_t buflen, char* buf, size_t* output_len) {
+  uint32_to_varint(zigzag_encode32(in), buflen, buf, output_len);
 }
+
+
+
+void
+int64_to_varint(const int64_t in, const size_t buflen, char* buf, size_t* output_len) {
+  uint64_to_varint(zigzag_encode64(in), buflen, buf, output_len);
+}
+
 
 
 void
 uint32_to_varint(const uint32_t in, const size_t buflen, char* buf, size_t* output_len) {
-  if (buflen >= kMaxVarint32Bytes) {
+  if (buflen >= MAX_VARINT32_BYTES) {
     buf[0] = (unsigned char)(in | 0x80);
 
     if (in >= (1 << 7)) {
@@ -90,36 +104,6 @@ uint32_to_varint(const uint32_t in, const size_t buflen, char* buf, size_t* outp
   return;
 }
 
-
-void
-varint_to_uint64(const char* buf, const size_t buflen, uint64_t* out, size_t* consumed) {
-  const char* ptr = buf;
-  uint64_t b;
-  /* According to Google, splitting into 32-bit pieces gives better
-   * performace on 32-bit processors. */
-  uint32_t part0 = 0, part1 = 0, part2 = 0;
-
-  if (buflen <  1) goto err; b = *(ptr++); part0  = (b & 0x7F);       if (!(b & 0x80)) goto done;
-  if (buflen <  2) goto err; b = *(ptr++); part0 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
-  if (buflen <  3) goto err; b = *(ptr++); part0 |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
-  if (buflen <  4) goto err; b = *(ptr++); part0 |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
-  if (buflen <  5) goto err; b = *(ptr++); part1  = (b & 0x7F);       if (!(b & 0x80)) goto done;
-  if (buflen <  6) goto err; b = *(ptr++); part1 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
-  if (buflen <  7) goto err; b = *(ptr++); part1 |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
-  if (buflen <  8) goto err; b = *(ptr++); part1 |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
-  if (buflen <  9) goto err; b = *(ptr++); part2  = (b & 0x7F);       if (!(b & 0x80)) goto done;
-  if (buflen < 10) goto err; b = *(ptr++); part2 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
-
-  /* Buffer over run: the max size of a varint encoded uint64_t is 10 bytes. */
-  goto err;
-done:
-  *consumed = ptr - buf;
-  *out = (part0 | ((uint64_t)(part1) << 28) | ((uint64_t)(part2) << 56));
-  return;
-err:
-  *consumed = 0;
-  return;
-}
 
 
 void
@@ -182,5 +166,88 @@ uint64_to_varint(const uint64_t in, const size_t buflen, char* buf, size_t* outp
   return;
 error:
   *output_len = 0;
+  return;
+}
+
+
+
+void
+varint_to_int32(const char* buf, const size_t buflen, int32_t* out, size_t* consumed) {
+  uint32_t result;
+  varint_to_uint32(buf, buflen, &result, consumed);
+  if (consumed)
+    *out = zigzag_decode32(result);
+}
+
+
+
+void
+varint_to_int64(const char* buf, const size_t buflen, int64_t* out, size_t* consumed) {
+  uint64_t result;
+  varint_to_uint64(buf, buflen, &result, consumed);
+  if (consumed)
+    *out = zigzag_decode64(result);
+}
+
+
+
+void
+varint_to_uint32(const char* buf, const size_t buflen, uint32_t* out, size_t* consumed) {
+  const char* ptr = buf;
+  uint32_t b;
+  uint32_t result;
+
+  if (buflen <  1) goto err; b = *(ptr++); result  = (b & 0x7F);       if (!(b & 0x80)) goto done;
+  if (buflen <  2) goto err; b = *(ptr++); result |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
+  if (buflen <  3) goto err; b = *(ptr++); result |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
+  if (buflen <  4) goto err; b = *(ptr++); result |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
+  if (buflen <  5) goto err; b = *(ptr++); result |= (b & 0x7F) << 28; if (!(b & 0x80)) goto done;
+
+  // If the input is larger than 32 bits, we still need to read it all
+  // and discard the high-order bits.
+  for (int i = 0; i < MAX_VARINT64_BYTES - MAX_VARINT32_BYTES; i++) {
+    b = *(ptr++); if (!(b & 0x80)) goto done;
+  }
+
+  /* Buffer over run: the max size of a varint encoded uint32_t is 5 bytes. */
+  goto err;
+done:
+  *consumed = ptr - buf;
+  *out = result;
+  return;
+err:
+  *consumed = 0;
+  return;
+}
+
+
+
+void
+varint_to_uint64(const char* buf, const size_t buflen, uint64_t* out, size_t* consumed) {
+  const char* ptr = buf;
+  uint64_t b;
+  /* According to Google, splitting into 32-bit pieces gives better
+   * performace on 32-bit processors. */
+  uint32_t part0 = 0, part1 = 0, part2 = 0;
+
+  if (buflen <  1) goto err; b = *(ptr++); part0  = (b & 0x7F);       if (!(b & 0x80)) goto done;
+  if (buflen <  2) goto err; b = *(ptr++); part0 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
+  if (buflen <  3) goto err; b = *(ptr++); part0 |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
+  if (buflen <  4) goto err; b = *(ptr++); part0 |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
+  if (buflen <  5) goto err; b = *(ptr++); part1  = (b & 0x7F);       if (!(b & 0x80)) goto done;
+  if (buflen <  6) goto err; b = *(ptr++); part1 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
+  if (buflen <  7) goto err; b = *(ptr++); part1 |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
+  if (buflen <  8) goto err; b = *(ptr++); part1 |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
+  if (buflen <  9) goto err; b = *(ptr++); part2  = (b & 0x7F);       if (!(b & 0x80)) goto done;
+  if (buflen < 10) goto err; b = *(ptr++); part2 |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
+
+  /* Buffer over run: the max size of a varint encoded uint64_t is 10 bytes. */
+  goto err;
+done:
+  *consumed = ptr - buf;
+  *out = (part0 | ((uint64_t)(part1) << 28) | ((uint64_t)(part2) << 56));
+  return;
+err:
+  *consumed = 0;
   return;
 }

@@ -20,18 +20,71 @@
 
 #include "varint.h"
 
+
+
+typedef struct {
+  int64_t num;
+  size_t consumed;
+  char nibbles[10];
+} test_record_int64_t;
+
+
+
 typedef struct {
   uint64_t num;
   size_t consumed;
   char nibbles[10];
-} test_record_t;
+} test_record_uint64_t;
+
 
 
 int
-test_record32(const test_record_t* rec) {
+test_record_int32(const test_record_int64_t* rec) {
   const size_t buflen = 5;
   char buf[buflen];
   size_t outlen = 0;
+
+  int32_to_varint((int32_t)rec->num, buflen, buf, &outlen);
+  if (outlen != rec->consumed) {
+    fprintf(stderr, "Incorrect byte length %zu (expected %zu) for input %d\n",
+            outlen, rec->consumed, (int32_t)rec->num);
+    return 1;
+  }
+
+  int failed = 0;
+  for (size_t i = 0; i < outlen; ++i) {
+    if (rec->nibbles[i] == buf[i]) {
+      /* Good */
+    } else {
+      if (failed == 0) printf("  { %d, %2zu, {", (int32_t)rec->num, outlen);
+      printf(" 0x%02hhX,", buf[i]);
+      ++failed;
+    }
+  }
+  if (failed) {
+    printf(" } },\n");
+    return failed;
+  }
+
+  int32_t dst = 0;
+  size_t consumed = 0;
+  varint_to_int32(buf, buflen, &dst, &consumed);
+  if (consumed != rec->consumed) {
+    fprintf(stderr, "Incorrect number of bytes consumed: %zu\n", consumed);
+    return 1;
+  }
+
+  return 0;
+}
+
+
+
+int
+test_record_uint32(const test_record_uint64_t* rec) {
+  const size_t buflen = 5;
+  char buf[buflen];
+  size_t outlen = 0;
+
   uint32_to_varint((uint32_t)rec->num, buflen, buf, &outlen);
   if (outlen != rec->consumed) {
     fprintf(stderr, "Incorrect byte length %zu (expected %zu) for input %llx\n", outlen, rec->consumed, rec->num);
@@ -65,11 +118,53 @@ test_record32(const test_record_t* rec) {
 }
 
 
+
 int
-test_record64(const test_record_t* rec) {
+test_record_int64(const test_record_int64_t* rec) {
   const size_t buflen = 10;
   char buf[buflen];
   size_t outlen = 0;
+
+  int64_to_varint(rec->num, buflen, buf, &outlen);
+  if (outlen != rec->consumed) {
+    fprintf(stderr, "Incorrect byte length %zu (expected %zu) for input %lld\n", outlen, rec->consumed, rec->num);
+    return 1;
+  }
+
+  int failed = 0;
+  for (size_t i = 0; i < outlen; ++i) {
+    if (rec->nibbles[i] == buf[i]) {
+      /* Good */
+    } else {
+      if (failed == 0) printf("  { %lld, %2zu, {", rec->num, outlen);
+      printf(" 0x%02hhX,", buf[i]);
+      ++failed;
+    }
+  }
+  if (failed) {
+    printf(" } },\n");
+    return failed;
+  }
+
+  int64_t dst = 0;
+  size_t consumed = 0;
+  varint_to_int64(buf, buflen, &dst, &consumed);
+  if (consumed != rec->consumed) {
+    fprintf(stderr, "Incorrect number of bytes consumed: %zu\n", consumed);
+    return 1;
+  }
+
+  return 0;
+}
+
+
+
+int
+test_record_uint64(const test_record_uint64_t* rec) {
+  const size_t buflen = 10;
+  char buf[buflen];
+  size_t outlen = 0;
+
   uint64_to_varint(rec->num, buflen, buf, &outlen);
   if (outlen != rec->consumed) {
     fprintf(stderr, "Incorrect byte length %zu (expected %zu) for input %llx\n", outlen, rec->consumed, rec->num);
@@ -81,7 +176,6 @@ test_record64(const test_record_t* rec) {
     if (rec->nibbles[i] == buf[i]) {
       /* Good */
     } else {
-      /*      printf("\tFor input %llu, Byte %zu unexpected: 0x%02hhX\n", rec->num, i, buf[i]); */
       if (failed == 0) printf("  { %20llx, %2zu, {", rec->num, outlen);
       printf(" 0x%02hhX,", buf[i]);
       ++failed;
@@ -104,7 +198,23 @@ test_record64(const test_record_t* rec) {
 }
 
 
-const test_record_t test_records_good[] = {
+
+/* Rely on the uint64_t tests for a more exhaustive battery of tests. Only
+ * test the boundary conditions using the int64_t records. */
+const test_record_int64_t test_records_good_int64[] = {
+  {                  0x0,  1, { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+  {                 -0x1,  1, { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+  {                  0x1,  1, { 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+  {                 -0x2,  1, { 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+  {                  0x2,  1, { 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+  {           0x7fffffff,  5, { 0xFE, 0xFF, 0xFF, 0xFF, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+  {          -0x80000000,  5, { 0x80, 0x80, 0x80, 0x80, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+  {  0, 0, {0x0} },
+};
+
+
+
+const test_record_uint64_t test_records_good_uint64[] = {
   {                  0x0,  1, { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
   {                  0x1,  1, { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
   {                  0x2,  1, { 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
@@ -316,27 +426,50 @@ int
 main(int argc, char* argv[]) {
   if (argc == 1) {
     int failed = 0;
-    for (int i = 0; test_records_good[i].consumed; ++i) {
-      if (test_records_good[i].num > UINT32_MAX)
+    /* uint32_t */
+    for (int i = 0; test_records_good_uint64[i].consumed; ++i) {
+      if (test_records_good_uint64[i].num > UINT32_MAX)
         continue;
 
-      failed += test_record32(&test_records_good[i]);
+      failed += test_record_uint32(&test_records_good_uint64[i]);
       if (failed)
         break;
     }
-
-    for (int i = 0; test_records_good[i].consumed; ++i) {
-      failed += test_record64(&test_records_good[i]);
-      if (failed)
-        break;
-    }
-
     if (failed)
-      return 1;
-    else {
-      printf("Tests completed successfully\n");
-      return 0;
+      errx(EX_SOFTWARE, "%d uint32_t tests failed", failed);
+
+    /* uint64_t */
+    for (int i = 0; test_records_good_uint64[i].consumed; ++i) {
+      failed += test_record_uint64(&test_records_good_uint64[i]);
+      if (failed)
+        break;
     }
+    if (failed)
+      errx(EX_SOFTWARE, "%d uint64_t tests failed", failed);
+
+    /* int32_t */
+    for (int i = 0; test_records_good_int64[i].consumed; ++i) {
+      if (test_records_good_int64[i].num > INT32_MAX)
+        continue;
+
+      failed += test_record_int32(&test_records_good_int64[i]);
+      if (failed)
+        break;
+    }
+    if (failed)
+      errx(EX_SOFTWARE, "%d int32_t tests failed", failed);
+
+    /* int64_t */
+    for (int i = 0; test_records_good_int64[i].consumed; ++i) {
+      failed += test_record_int64(&test_records_good_int64[i]);
+      if (failed)
+        break;
+    }
+    if (failed)
+      errx(EX_SOFTWARE, "%d int64_t tests failed", failed);
+
+    printf("Tests completed successfully\n");
+    return 0;
   } else if (argc == 2) {
     char* cp;
     uint64_t input = strtol(argv[1], &cp, 10);

@@ -42,6 +42,24 @@
 #include <unistd.h>
 
 /*!
+ * Encode an int32_t on a preallocated buffer
+ * @param[in]      in The int32_t input
+ * @param[in]   bufsz The size of the buffer being used to serialize \$in
+ * @param[out]    buf The output buffer for the serialized int32_t \var value
+ * @param[out] buflen The amount of buffer consumed
+ */
+void int32_to_varint(const int32_t in, const size_t bufsz, char* buf, size_t* buflen);
+
+/*!
+ * Encode an int64_t on a preallocated buffer
+ * @param[in]      in The int64_t input
+ * @param[in]   bufsz The size of the buffer being used to serialize \$in
+ * @param[out]    buf The output buffer for the serialized int64_t \var value
+ * @param[out] buflen The amount of buffer consumed
+ */
+void int64_to_varint(const int64_t in, const size_t bufsz, char* buf, size_t* buflen);
+
+/*!
  * Encode a uint32_t on a preallocated buffer
  * @param[in]      in The uint32_t input
  * @param[in]   bufsz The size of the buffer being used to serialize \$in
@@ -51,15 +69,6 @@
 void uint32_to_varint(const uint32_t in, const size_t bufsz, char* buf, size_t* buflen);
 
 /*!
- * Converts the varint encoded unsigned integer back to a uint32_t
- * @param[in]      in The uint32_t input
- * @param[in]   bufsz The size of the buffer being used to serialize \$in
- * @param[out]    buf The output buffer for the serialized uint32_t \var value
- * @param[out] buflen The amount of buffer consumed
- */
-void varint_to_uint32(const char* buf, const size_t bufsz, uint32_t* out, size_t* consumed);
-
-/*!
  * Encode a uint64_t on a preallocated buffer
  * @param[in]      in The uint64_t input
  * @param[in]   bufsz The size of the buffer being used to serialize \$in
@@ -67,6 +76,33 @@ void varint_to_uint32(const char* buf, const size_t bufsz, uint32_t* out, size_t
  * @param[out] buflen The amount of buffer consumed
  */
 void uint64_to_varint(const uint64_t in, const size_t bufsz, char* buf, size_t* buflen);
+
+/*!
+ * Converts the varint encoded unsigned integer back to a int32_t
+ * @param[in]      in The int32_t input
+ * @param[in]   bufsz The size of the buffer being used to serialize \$in
+ * @param[out]    buf The output buffer for the serialized int32_t \var value
+ * @param[out] buflen The amount of buffer consumed
+ */
+void varint_to_int32(const char* buf, const size_t bufsz, int32_t* out, size_t* consumed);
+
+/*!
+ * Converts the varint encoded unsigned integer back to a int64_t
+ * @param[in]      in The int64_t input
+ * @param[in]   bufsz The size of the buffer being used to serialize \$in
+ * @param[out]    buf The output buffer for the serialized int64_t \var value
+ * @param[out] buflen The amount of buffer consumed
+ */
+void varint_to_int64(const char* buf, const size_t bufsz, int64_t* out, size_t* consumed);
+
+/*!
+ * Converts the varint encoded unsigned integer back to a uint32_t
+ * @param[in]      in The uint32_t input
+ * @param[in]   bufsz The size of the buffer being used to serialize \$in
+ * @param[out]    buf The output buffer for the serialized uint32_t \var value
+ * @param[out] buflen The amount of buffer consumed
+ */
+void varint_to_uint32(const char* buf, const size_t bufsz, uint32_t* out, size_t* consumed);
 
 /*!
  * Converts the varint encoded unsigned integer back to a uint64_t
