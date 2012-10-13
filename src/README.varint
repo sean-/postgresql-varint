@@ -1,0 +1,7 @@
+See www/index.wiki for now.
+
+% setenv PG_CONFIG /path/to/pg_config
+% make
+
+To test the installation:
+% make install && make installcheck

@@ -1,0 +1,5 @@
+# varint extension
+comment = 'data type to store variable width encoding of integer data'
+default_version = '1.0'
+module_pathname = '$libdir/varint'
+relocatable = true
