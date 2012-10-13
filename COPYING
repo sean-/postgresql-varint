@@ -26,6 +26,8 @@ Portions of the this software are Copyright 2008 Kenton Vara, Google Inc.
 Encoding method used is based on original Protocol Buffers design by Sanjay
 Ghemawat, Jeff Dean, and others.
 
+ZigZag transformations by Chris Atenasio <atenasio@google.com>
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
