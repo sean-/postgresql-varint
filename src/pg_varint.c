@@ -20,12 +20,10 @@
 PG_MODULE_MAGIC;
 #endif
 
-#define GETARG_VARINT64_P(x) PG_GETARG_POINTER(PG_GETARG_DATUM(x))
-
 /*
- * Since we use V1 function calling convention, all these functions have
- * the same signature as far as C is concerned.  We provide these prototypes
- * just to forestall warnings when compiled with gcc -Wmissing-prototypes.
+ * Since we use V1 function calling convention, all these functions have the
+ * same signature as far as C is concerned.  We provide these prototypes just
+ * to forestall warnings when compiled with clang -Wmissing-prototypes.
  */
 extern Datum varint64_in(PG_FUNCTION_ARGS);
 extern Datum varint64_out(PG_FUNCTION_ARGS);
@@ -120,6 +118,35 @@ varint64_out(PG_FUNCTION_ARGS) {
   }
 
   return DirectFunctionCall1(int8out, num);
+}
+
+
+PG_FUNCTION_INFO_V1(varint64_recv);
+Datum
+varint64_recv(PG_FUNCTION_ARGS) {
+  StringInfo buf = (StringInfo) PG_GETARG_POINTER(0);
+
+  return int64_to_varlena_varint64(pq_getmsgint64(buf));
+}
+
+
+PG_FUNCTION_INFO_V1(varint64_send);
+Datum
+varint64_send(PG_FUNCTION_ARGS) {
+  struct varlena *varint64 = PG_GETARG_VARLENA_PP(0);
+  StringInfoData buf;
+  int64_t num;
+  size_t consumed = 0;
+
+  varint_to_int64(VARDATA_ANY(varint64), VARSIZE_ANY(varint64), &num, &consumed);
+  if (consumed == 0) {
+    ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+                    errmsg("value is out of range for type VARINT64")));
+  }
+
+  pq_begintypsend(&buf);
+  pq_sendint64(&buf, (int64)num);
+  PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 

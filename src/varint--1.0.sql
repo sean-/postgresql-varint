@@ -13,20 +13,22 @@ CREATE FUNCTION varint64_out(varint64)
    LANGUAGE C IMMUTABLE STRICT;
 COMMENT ON FUNCTION varint64_in(cstring) IS 'Convert a varint64 to cstring';
 
--- CREATE FUNCTION varint64_recv(internal)
---    RETURNS varint64
---    AS 'MODULE_PATHNAME'
---    LANGUAGE C IMMUTABLE STRICT;
+CREATE FUNCTION varint64_recv(internal)
+   RETURNS varint64
+   AS 'MODULE_PATHNAME'
+   LANGUAGE C IMMUTABLE STRICT;
 
--- CREATE FUNCTION varint64_send(varint64)
---    RETURNS bytea
---    AS 'MODULE_PATHNAME'
---    LANGUAGE C IMMUTABLE STRICT;
+CREATE FUNCTION varint64_send(varint64)
+   RETURNS bytea
+   AS 'MODULE_PATHNAME'
+   LANGUAGE C IMMUTABLE STRICT;
 
 CREATE TYPE varint64 (
    internallength = VARIABLE,
    input = varint64_in,
    output = varint64_out,
+   receive = varint64_recv,
+   send = varint64_send,
    alignment = int4,
    storage = main
 );
