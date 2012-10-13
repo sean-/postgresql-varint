@@ -113,4 +113,8 @@ void varint_to_uint32(const char* buf, const size_t bufsz, uint32_t* out, size_t
  */
 void varint_to_uint64(const char* buf, const size_t bufsz, uint64_t* out, size_t* consumed);
 
+/* Define a few constants */
+#define VARINT32_MAX_BYTES  5
+#define VARINT64_MAX_BYTES 10
+
 #endif /* POSTGRESQL_VARINT_H */

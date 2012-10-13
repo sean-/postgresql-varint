@@ -17,9 +17,6 @@
 
 #include "varint.h"
 
-static const int MAX_VARINT32_BYTES = 5;
-static const int MAX_VARINT64_BYTES = 10;
-
 
 
 static inline int32_t zigzag_decode32(const uint32_t n) {
@@ -64,7 +61,7 @@ int64_to_varint(const int64_t in, const size_t buflen, char* buf, size_t* output
 
 void
 uint32_to_varint(const uint32_t in, const size_t buflen, char* buf, size_t* output_len) {
-  if (buflen >= MAX_VARINT32_BYTES) {
+  if (buflen >= VARINT32_MAX_BYTES) {
     buf[0] = (unsigned char)(in | 0x80);
 
     if (in >= (1 << 7)) {
@@ -196,6 +193,7 @@ varint_to_uint32(const char* buf, const size_t buflen, uint32_t* out, size_t* co
   const char* ptr = buf;
   uint32_t b;
   uint32_t result;
+  int i;
 
   if (buflen <  1) goto err; b = *(ptr++); result  = (b & 0x7F);       if (!(b & 0x80)) goto done;
   if (buflen <  2) goto err; b = *(ptr++); result |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
@@ -205,7 +203,7 @@ varint_to_uint32(const char* buf, const size_t buflen, uint32_t* out, size_t* co
 
   // If the input is larger than 32 bits, we still need to read it all
   // and discard the high-order bits.
-  for (int i = 0; i < MAX_VARINT64_BYTES - MAX_VARINT32_BYTES; i++) {
+  for (i = 0; i < VARINT64_MAX_BYTES - VARINT32_MAX_BYTES; i++) {
     b = *(ptr++); if (!(b & 0x80)) goto done;
   }
 
