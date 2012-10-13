@@ -1,4 +1,4 @@
-* Intro
+* Intro to PostgreSQL-varint
   varint is a data type for PostgreSQL that encodes integers using variable
   width encoding in order to save space. INT8 consumes 8 bytes per integer
   regardless of the value stored. Using varint64, however, for most values
