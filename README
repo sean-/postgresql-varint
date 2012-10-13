@@ -1,0 +1,73 @@
+* Intro
+  varint is a data type for PostgreSQL that encodes integers using variable
+  width encoding in order to save space. INT8 consumes 8 bytes per integer
+  regardless of the value stored. Using varint64, however, for most values
+  there is a space savings. Spread across billions of values, this can add up
+  to considerable savings.
+* Installation
+  To install:
+
+  1) Add pg_config to your path or set the PG_CONFIG environment variable
+     path to point to pg_config (tcsh & sh, respectively):
+     : setenv PG_CONFIG /path/to/pg_config
+     : PG_CONFIG=/path/to/pg_config; export PG_CONFIG
+  2) Compile and install:
+     : make install
+  3) To test:
+     : make installcheck
+* Future
+  As of 2012-10-13, varint64 is a published type. In the future varuint64
+  will be released along with varint32 and varuint32.
+* Bugs
+  If you find bugs, post 'em on github at:
+  https://github.com/sean-/postgresql-varint/issues
+* Contributing
+  Primary development is being done in a fossil repository, however
+  (fossil-scm.org).
+* Hotness
+  From the regression tests:
+  #+begin_src sql
+% SELECT varint64, sizeof(varint64) FROM varint64_table ORDER BY varint64 ASC;
+       varint64       | sizeof
+----------------------+--------
+ -4611686018427387905 |     11
+ -4611686018427387904 |     10
+ -36028797018963969   |     10
+ -36028797018963968   |      9
+ -281474976710657     |      9
+ -281474976710656     |      8
+ -2199023255553       |      8
+ -2199023255552       |      7
+ -17179869185         |      7
+ -17179869184         |      6
+ -134217729           |      6
+ -134217728           |      5
+ -1048577             |      5
+ -1048576             |      4
+ -8193                |      4
+ -8192                |      3
+ -65                  |      3
+ -64                  |      2
+ -1                   |      2
+ 0                    |      2
+ 1                    |      2
+ 63                   |      2
+ 64                   |      3
+ 8191                 |      3
+ 8192                 |      4
+ 1048575              |      4
+ 1048576              |      5
+ 134217727            |      5
+ 134217728            |      6
+ 17179869183          |      6
+ 17179869184          |      7
+ 2199023255551        |      7
+ 2199023255552        |      8
+ 281474976710655      |      8
+ 281474976710656      |      9
+ 36028797018963967    |      9
+ 36028797018963968    |     10
+ 4611686018427387903  |     10
+ 4611686018427387904  |     11
+(39 rows)
+  #+end_src
