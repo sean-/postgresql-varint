@@ -64,11 +64,6 @@ extern Datum varuint64_to_int2(PG_FUNCTION_ARGS);
 extern Datum varuint64_to_int4(PG_FUNCTION_ARGS);
 extern Datum varuint64_to_int8(PG_FUNCTION_ARGS);
 
-extern Datum varint64_sizeof(PG_FUNCTION_ARGS);
-extern Datum varint64_sizeof2(PG_FUNCTION_ARGS);
-extern Datum varuint64_sizeof(PG_FUNCTION_ARGS);
-extern Datum varuint64_sizeof2(PG_FUNCTION_ARGS);
-
 
 
 /*****************************************************************************
@@ -660,31 +655,4 @@ varuint64_to_int8(PG_FUNCTION_ARGS) {
                     errmsg("value is out of range for type VARUINT64")));
   }
   PG_RETURN_INT64((int64) out);
-}
-
-
-
-PG_FUNCTION_INFO_V1(varint64_sizeof);
-Datum
-varint64_sizeof(PG_FUNCTION_ARGS) {
-  struct varlena *var = PG_GETARG_VARLENA_PP(0);
-
-  PG_RETURN_INT32(VARSIZE_ANY(var));
-}
-
-
-
-PG_FUNCTION_INFO_V1(varint64_sizeof2);
-Datum
-varint64_sizeof2(PG_FUNCTION_ARGS) {
-  struct varlena *var = PG_GETARG_VARLENA_PP(0);
-  bool include_varlena = PG_GETARG_BOOL(1);
-
-  if (include_varlena)
-    PG_RETURN_INT32(VARSIZE_ANY(var));
-
-  if (VARATT_IS_SHORT(var))
-    PG_RETURN_INT32(VARSIZE_ANY(var) - 1 /* 1 byte VARLENA header */);
-  else
-    PG_RETURN_INT32(VARSIZE_ANY(var) - 4 /* 4 byte VARLENA header */);
 }

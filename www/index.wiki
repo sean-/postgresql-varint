@@ -11,14 +11,14 @@ CREATE TABLE t (
   u VARUINT64, -- Unsigned INT8
 );
 -- Check the sizes in memory
-test=# SELECT sizeof('0'::VARINT64), sizeof('0'::VARUINT64);
- sizeof | sizeof
---------+--------
-      5 |      5
+test=# SELECT  pg_column_size('0'::VARINT64),  pg_column_size('0'::VARUINT64);
+  pg_column_size |  pg_column_size
+-----------------+-----------------
+               5 |               5
 (1 row)
 
 test=# INSERT INTO t VALUES (0::VARINT64, 0::VARUINT64);
-test=# SELECT sizeof(i) AS signed, sizeof(u) AS unsigned FROM t;
+test=# SELECT  pg_column_size(i) AS signed,  pg_column_size(u) AS unsigned FROM t;
  signed | unsigned
 --------+----------
       2 |        2

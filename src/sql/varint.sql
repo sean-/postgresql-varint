@@ -260,10 +260,10 @@ SELECT * FROM varuint64_table WHERE '123'::VARUINT64 >= lhs;
 
 
 -- And now for the punchline: test the encoded sizes of various bits
-SELECT rhs, sizeof(rhs), sizeof(rhs, true), sizeof(rhs, false) FROM varint64_table WHERE lhs = '-1' ORDER BY rhs ASC;
+SELECT rhs, pg_column_size(rhs) FROM varint64_table WHERE lhs = '-1' ORDER BY rhs ASC;
 
 -- And now for the punchline: test the encoded sizes of various bits
-SELECT rhs, sizeof(rhs), sizeof(rhs, true), sizeof(rhs, false) FROM varuint64_table WHERE lhs = '0' ORDER BY rhs ASC;
+SELECT rhs, pg_column_size(rhs) FROM varuint64_table WHERE lhs = '0' ORDER BY rhs ASC;
 
 -- Cleanup
 DROP TABLE varint64_table;

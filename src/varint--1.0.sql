@@ -287,29 +287,3 @@ CREATE CAST (int8 AS varuint64) WITH FUNCTION varuint64(int8) AS IMPLICIT;
 CREATE CAST (varuint64 AS int2) WITH FUNCTION int2(varuint64) AS IMPLICIT;
 CREATE CAST (varuint64 AS int4) WITH FUNCTION int4(varuint64) AS IMPLICIT;
 CREATE CAST (varuint64 AS int8) WITH FUNCTION int8(varuint64) AS IMPLICIT;
-
-
--- Deliberately using a function name different than LENGTH because the
--- semantic meaning of sizeof() is different than that of LENGTH (the size of
--- a varint64 vs the length of the string representation, respectively).
-CREATE FUNCTION sizeof(varint64) RETURNS integer AS 'MODULE_PATHNAME', 'varint64_sizeof'
-  LANGUAGE C IMMUTABLE STRICT;
-COMMENT ON FUNCTION sizeof(varint64) IS 'Returns the complete on-disk size of the varint64 (including VARLENA header)';
-
-CREATE FUNCTION sizeof(varint64, bool) RETURNS integer AS 'MODULE_PATHNAME', 'varint64_sizeof2'
-  LANGUAGE C IMMUTABLE STRICT;
-COMMENT ON FUNCTION sizeof(varint64, bool) IS 'Returns the complete on-disk size of the varint64. When the extra argument is set, it includes the VARLENA header in the calculation.';
-
-
--- Deliberately using a function name different than LENGTH because the
--- semantic meaning of sizeof() is different than that of LENGTH (the size of
--- a varuint64 vs the length of the string representation,
--- respectively). varuint64 uses the same in-memory structure as varint64, so
--- we can reuse the same C functions.
-CREATE FUNCTION sizeof(varuint64) RETURNS integer AS 'MODULE_PATHNAME', 'varint64_sizeof'
-  LANGUAGE C IMMUTABLE STRICT;
-COMMENT ON FUNCTION sizeof(varuint64) IS 'Returns the complete on-disk size of the varuint64 (including VARLENA header)';
-
-CREATE FUNCTION sizeof(varuint64, bool) RETURNS integer AS 'MODULE_PATHNAME', 'varint64_sizeof2'
-  LANGUAGE C IMMUTABLE STRICT;
-COMMENT ON FUNCTION sizeof(varuint64, bool) IS 'Returns the complete on-disk size of the varuint64. When the extra argument is set, it includes the VARLENA header in the calculation.';
