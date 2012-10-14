@@ -508,6 +508,44 @@ SELECT   '9223372036854775808'::VARUINT64::INT8 AS "ERROR: 9223372036854775808";
 ERROR:  value "9223372036854775808" is out of range for type bigint
 LINE 1: SELECT   '9223372036854775808'::VARUINT64::INT8 AS "ERROR: 9...
                  ^
+-- Implicit type conversion tests for varint64
+SELECT 1::INT2 + 1::VARINT64 AS "2";
+ 2 
+---
+ 2
+(1 row)
+
+SELECT 2::INT2 + 2::VARINT64 AS "4";
+ 4 
+---
+ 4
+(1 row)
+
+SELECT 3::INT2 + 3::VARINT64 AS "6";
+ 6 
+---
+ 6
+(1 row)
+
+-- Implicit type conversion tests for varuint64
+SELECT 10::INT2 + 10::VARUINT64 AS "20";
+ 20 
+----
+ 20
+(1 row)
+
+SELECT 20::INT2 + 20::VARUINT64 AS "40";
+ 40 
+----
+ 40
+(1 row)
+
+SELECT 30::INT2 + 30::VARUINT64 AS "60";
+ 60 
+----
+ 60
+(1 row)
+
 -- Durable type comparison tests for varint64
 CREATE TABLE varint64_table(lhs VARINT64, rhs VARINT64);
 -- Leading/trailing spaces using two or more spaces or tabs
