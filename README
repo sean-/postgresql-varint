@@ -16,6 +16,28 @@
      : make install
   3) To test:
      : make installcheck
+* Usage
+  #+begin_src sql
+CREATE EXTENSION varint;
+-- Create a table
+CREATE TABLE t (
+  i  VARINT64, -- Signed INT8
+  u VARUINT64, -- Unsigned INT8
+);
+-- Check the sizes in memory
+test=# SELECT sizeof('0'::VARINT64), sizeof('0'::VARUINT64);
+ sizeof | sizeof
+--------+--------
+      5 |      5
+(1 row)
+
+test=# INSERT INTO t VALUES (0::VARINT64, 0::VARUINT64);
+test=# SELECT sizeof(i) AS signed, sizeof(u) AS unsigned FROM t;
+ signed | unsigned
+--------+----------
+      2 |        2
+(1 row)
+  #+end_src
 * Road Map
   As of 2012-10-13, varint64 and varuint64 are a published types. In the
   future varint32 and varuint32 will be released, maybe varint128 and

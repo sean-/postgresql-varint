@@ -4,6 +4,26 @@
 example, unlike normal 64 bit binary encoding, values between 0 and 127
 consume only one byte of storage on disk.</p>
 
+<p>Simple usage:<pre>CREATE EXTENSION varint;
+-- Create a table
+CREATE TABLE t (
+  i  VARINT64, -- Signed INT8
+  u VARUINT64, -- Unsigned INT8
+);
+-- Check the sizes in memory
+test=# SELECT sizeof('0'::VARINT64), sizeof('0'::VARUINT64);
+ sizeof | sizeof
+--------+--------
+      5 |      5
+(1 row)
+
+test=# INSERT INTO t VALUES (0::VARINT64, 0::VARUINT64);
+test=# SELECT sizeof(i) AS signed, sizeof(u) AS unsigned FROM t;
+ signed | unsigned
+--------+----------
+      2 |        2
+(1 row)</pre></p>
+
 <p>For values between <code>0</code> and <code>562,949,953,421,311</code>
 (<code>0x1ffffffffffff</code>, a.k.a. 2<sup>49</sup> -
 1), <code>uint64</code> will save anywhere between 1-7 bytes of storage.</p>
