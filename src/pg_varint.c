@@ -312,6 +312,10 @@ varint64_lt(PG_FUNCTION_ARGS) {
   int64_t lhs = varlena_varint64_to_int64(lhs_var);
   int64_t rhs = varlena_varint64_to_int64(rhs_var);
 
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
+
   PG_RETURN_BOOL(varint64_cmp_internal(lhs, rhs) < 0);
 }
 
@@ -325,6 +329,10 @@ varuint64_lt(PG_FUNCTION_ARGS) {
 
   uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
   uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
 
   PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) < 0);
 }
@@ -340,6 +348,10 @@ varint64_le(PG_FUNCTION_ARGS) {
   int64_t lhs = varlena_varint64_to_int64(lhs_var);
   int64_t rhs = varlena_varint64_to_int64(rhs_var);
 
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
+
   PG_RETURN_BOOL(varint64_cmp_internal(lhs, rhs) <= 0);
 }
 
@@ -353,6 +365,10 @@ varuint64_le(PG_FUNCTION_ARGS) {
 
   uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
   uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
 
   PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) <= 0);
 }
@@ -368,6 +384,10 @@ varint64_eq(PG_FUNCTION_ARGS) {
   int64_t lhs = varlena_varint64_to_int64(lhs_var);
   int64_t rhs = varlena_varint64_to_int64(rhs_var);
 
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
+
   PG_RETURN_BOOL(varint64_cmp_internal(lhs, rhs) == 0);
 }
 
@@ -381,6 +401,10 @@ varuint64_eq(PG_FUNCTION_ARGS) {
 
   uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
   uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
 
   PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) == 0);
 }
@@ -396,6 +420,10 @@ varint64_ne(PG_FUNCTION_ARGS) {
   int64_t lhs = varlena_varint64_to_int64(lhs_var);
   int64_t rhs = varlena_varint64_to_int64(rhs_var);
 
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
+
   PG_RETURN_BOOL(varint64_cmp_internal(lhs, rhs) != 0);
 }
 
@@ -409,6 +437,10 @@ varuint64_ne(PG_FUNCTION_ARGS) {
 
   uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
   uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
 
   PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) != 0);
 }
@@ -424,6 +456,10 @@ varint64_ge(PG_FUNCTION_ARGS) {
   int64_t lhs = varlena_varint64_to_int64(lhs_var);
   int64_t rhs = varlena_varint64_to_int64(rhs_var);
 
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
+
   PG_RETURN_BOOL(varint64_cmp_internal(lhs, rhs) >= 0);
 }
 
@@ -437,6 +473,10 @@ varuint64_ge(PG_FUNCTION_ARGS) {
 
   uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
   uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
 
   PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) >= 0);
 }
@@ -452,6 +492,10 @@ varint64_gt(PG_FUNCTION_ARGS) {
   int64_t lhs = varlena_varint64_to_int64(lhs_var);
   int64_t rhs = varlena_varint64_to_int64(rhs_var);
 
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
+
   PG_RETURN_BOOL(varint64_cmp_internal(lhs, rhs) > 0);
 }
 
@@ -465,6 +509,10 @@ varuint64_gt(PG_FUNCTION_ARGS) {
 
   uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
   uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
 
   PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) > 0);
 }
@@ -480,6 +528,10 @@ varint64_cmp(PG_FUNCTION_ARGS) {
   int64_t lhs = varlena_varint64_to_int64(lhs_var);
   int64_t rhs = varlena_varint64_to_int64(rhs_var);
 
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
+
   PG_RETURN_INT32(varint64_cmp_internal(lhs, rhs));
 }
 
@@ -493,6 +545,10 @@ varuint64_cmp(PG_FUNCTION_ARGS) {
 
   uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
   uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  /* B-Tree function: required to explicitly free */
+  PG_FREE_IF_COPY(lhs_var, 0);
+  PG_FREE_IF_COPY(rhs_var, 1);
 
   PG_RETURN_INT32(varuint64_cmp_internal(lhs, rhs));
 }
