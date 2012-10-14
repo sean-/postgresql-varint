@@ -3,7 +3,8 @@
   width encoding in order to save space. INT8 consumes 8 bytes per integer
   regardless of the value stored. Using varint64, however, for most values
   there is a space savings. Spread across billions of values, this can add up
-  to considerable savings.
+  to considerable savings. Storing data as varuint64 allows for maximal
+  savings if your data never contains values less than 0.
 * Installation
   To install:
 
@@ -15,9 +16,10 @@
      : make install
   3) To test:
      : make installcheck
-* Future
-  As of 2012-10-13, varint64 is a published type. In the future varuint64
-  will be released along with varint32 and varuint32.
+* Road Map
+  As of 2012-10-13, varint64 and varuint64 are a published types. In the
+  future varint32 and varuint32 will be released, maybe varint128 and
+  varuint128.
 * Bugs
   If you find bugs, post 'em on github at:
   https://github.com/sean-/postgresql-varint/issues
@@ -25,7 +27,31 @@
   Primary development is being done in a fossil repository, however
   (fossil-scm.org).
 * Hotness
-  From the regression tests:
+  From the regression tests, unsigned integers:
+  #+begin_src sql
+% SELECT varuint64, sizeof(varint64) FROM varuint64_table ORDER BY varint64 ASC;
+      varuint64      | sizeof
+---------------------+--------
+ 0                   |      2
+ 127                 |      2
+ 128                 |      3
+ 16383               |      3
+ 16384               |      4
+ 2097151             |      4
+ 2097152             |      5
+ 268435455           |      5
+ 268435456           |      6
+ 34359738367         |      6
+ 34359738368         |      7
+ 4398046511103       |      7
+ 4398046511104       |      8
+ 562949953421311     |      8
+ 562949953421312     |      9
+ 72057594037927935   |      9
+ 72057594037927936   |     10
+ 9223372036854775807 |     10
+  #+end_src
+  and signed integers:
   #+begin_src sql
 % SELECT varint64, sizeof(varint64) FROM varint64_table ORDER BY varint64 ASC;
        varint64       | sizeof

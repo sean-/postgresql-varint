@@ -7,6 +7,8 @@
   format for these routines is dictated by Postgres architecture.
 ******************************************************************************/
 
+#include <stdint.h>
+
 #include "postgres.h"
 
 #include "fmgr.h"
@@ -29,28 +31,45 @@ extern Datum varint64_in(PG_FUNCTION_ARGS);
 extern Datum varint64_out(PG_FUNCTION_ARGS);
 extern Datum varint64_recv(PG_FUNCTION_ARGS);
 extern Datum varint64_send(PG_FUNCTION_ARGS);
+extern Datum varuint64_in(PG_FUNCTION_ARGS);
+extern Datum varuint64_out(PG_FUNCTION_ARGS);
+extern Datum varuint64_recv(PG_FUNCTION_ARGS);
+extern Datum varuint64_send(PG_FUNCTION_ARGS);
 
-extern Datum varint64_lt(PG_FUNCTION_ARGS);
-extern Datum varint64_le(PG_FUNCTION_ARGS);
+extern Datum varint64_cmp(PG_FUNCTION_ARGS);
 extern Datum varint64_eq(PG_FUNCTION_ARGS);
-extern Datum varint64_ne(PG_FUNCTION_ARGS);
 extern Datum varint64_ge(PG_FUNCTION_ARGS);
 extern Datum varint64_gt(PG_FUNCTION_ARGS);
-extern Datum varint64_cmp(PG_FUNCTION_ARGS);
+extern Datum varint64_le(PG_FUNCTION_ARGS);
+extern Datum varint64_lt(PG_FUNCTION_ARGS);
+extern Datum varint64_ne(PG_FUNCTION_ARGS);
+extern Datum varuint64_cmp(PG_FUNCTION_ARGS);
+extern Datum varuint64_eq(PG_FUNCTION_ARGS);
+extern Datum varuint64_ge(PG_FUNCTION_ARGS);
+extern Datum varuint64_gt(PG_FUNCTION_ARGS);
+extern Datum varuint64_le(PG_FUNCTION_ARGS);
+extern Datum varuint64_lt(PG_FUNCTION_ARGS);
+extern Datum varuint64_ne(PG_FUNCTION_ARGS);
 
 extern Datum int2_to_varint64(PG_FUNCTION_ARGS);
+extern Datum int2_to_varuint64(PG_FUNCTION_ARGS);
 extern Datum int4_to_varint64(PG_FUNCTION_ARGS);
+extern Datum int4_to_varuint64(PG_FUNCTION_ARGS);
 extern Datum int8_to_varint64(PG_FUNCTION_ARGS);
+extern Datum int8_to_varuint64(PG_FUNCTION_ARGS);
 extern Datum varint64_to_int2(PG_FUNCTION_ARGS);
 extern Datum varint64_to_int4(PG_FUNCTION_ARGS);
 extern Datum varint64_to_int8(PG_FUNCTION_ARGS);
+extern Datum varuint64_to_int2(PG_FUNCTION_ARGS);
+extern Datum varuint64_to_int4(PG_FUNCTION_ARGS);
+extern Datum varuint64_to_int8(PG_FUNCTION_ARGS);
 
 extern Datum varint64_sizeof(PG_FUNCTION_ARGS);
 extern Datum varint64_sizeof2(PG_FUNCTION_ARGS);
+extern Datum varuint64_sizeof(PG_FUNCTION_ARGS);
+extern Datum varuint64_sizeof2(PG_FUNCTION_ARGS);
 
-/* Notes:
-   struct varattrib_1b == good;
- */
+
 
 /*****************************************************************************
  * Helper functions
@@ -68,6 +87,7 @@ varlena_varint64_to_int64(const struct varlena* va) {
   }
   return num;
 }
+
 
 
 static int64_t
@@ -89,6 +109,42 @@ int64_to_varlena_varint64(const int64_t in) {
 }
 
 
+
+static uint64_t
+varlena_varuint64_to_uint64(const struct varlena* va) {
+  size_t consumed = 0;
+  uint64_t num;
+
+  varint_to_uint64(VARDATA_ANY(va), VARSIZE_ANY(va), &num, &consumed);
+  if (consumed == 0) {
+    ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+                    errmsg("value is out of range for type VARUINT64")));
+  }
+  return num;
+}
+
+
+
+static uint64_t
+uint64_to_varlena_varuint64(const uint64_t in) {
+  const size_t bufsz = VARINT64_MAX_BYTES;
+  char buf[VARINT64_MAX_BYTES];
+  size_t buflen = 0;
+  char *out;
+
+  uint64_to_varint(in, bufsz, buf, &buflen);
+  if (buflen == 0) {
+    ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+                    errmsg("value is out of range for type VARUINT64")));
+  }
+  out = (char*)palloc(buflen + VARHDRSZ);
+  SET_VARSIZE(out, buflen + VARHDRSZ);
+  memcpy(VARDATA_ANY(out), buf, buflen);
+  PG_RETURN_POINTER(out);
+}
+
+
+
 /*****************************************************************************
  * Input/Output functions
  *****************************************************************************/
@@ -102,6 +158,7 @@ varint64_in(PG_FUNCTION_ARGS) {
   (void)scanint8(str, false, &num);
   return int64_to_varlena_varint64(num);
 }
+
 
 
 PG_FUNCTION_INFO_V1(varint64_out);
@@ -121,6 +178,7 @@ varint64_out(PG_FUNCTION_ARGS) {
 }
 
 
+
 PG_FUNCTION_INFO_V1(varint64_recv);
 Datum
 varint64_recv(PG_FUNCTION_ARGS) {
@@ -128,6 +186,7 @@ varint64_recv(PG_FUNCTION_ARGS) {
 
   return int64_to_varlena_varint64(pq_getmsgint64(buf));
 }
+
 
 
 PG_FUNCTION_INFO_V1(varint64_send);
@@ -148,6 +207,72 @@ varint64_send(PG_FUNCTION_ARGS) {
   pq_sendint64(&buf, (int64)num);
   PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
+
+
+
+PG_FUNCTION_INFO_V1(varuint64_in);
+Datum
+varuint64_in(PG_FUNCTION_ARGS) {
+  char *str = PG_GETARG_CSTRING(0);
+  int64 num;
+
+  (void)scanint8(str, false, &num);
+  /* Storing in to a varuint64, not varint64 */
+  if (num < 0) {
+    ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+                    errmsg("value is out of range for type VARUINT64")));
+  }
+  return uint64_to_varlena_varuint64((uint64_t)num);
+}
+
+
+
+PG_FUNCTION_INFO_V1(varuint64_out);
+Datum
+varuint64_out(PG_FUNCTION_ARGS) {
+  struct varlena *varuint64 = PG_GETARG_VARLENA_PP(0);
+  size_t consumed = 0;
+  uint64_t num;
+
+  varint_to_uint64(VARDATA_ANY(varuint64), VARSIZE_ANY(varuint64), &num, &consumed);
+  if (consumed == 0) {
+    ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+                    errmsg("value is out of range for type VARUINT64")));
+  }
+
+  return DirectFunctionCall1(int8out, num);
+}
+
+
+
+PG_FUNCTION_INFO_V1(varuint64_recv);
+Datum
+varuint64_recv(PG_FUNCTION_ARGS) {
+  StringInfo buf = (StringInfo) PG_GETARG_POINTER(0);
+
+  return uint64_to_varlena_varuint64(pq_getmsgint64(buf));
+}
+
+
+PG_FUNCTION_INFO_V1(varuint64_send);
+Datum
+varuint64_send(PG_FUNCTION_ARGS) {
+  struct varlena *varuint64 = PG_GETARG_VARLENA_PP(0);
+  StringInfoData buf;
+  uint64_t num;
+  size_t consumed = 0;
+
+  varint_to_uint64(VARDATA_ANY(varuint64), VARSIZE_ANY(varuint64), &num, &consumed);
+  if (consumed == 0 || num > INT64_MAX) {
+    ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+                    errmsg("value is out of range for type VARUINT64")));
+  }
+
+  pq_begintypsend(&buf);
+  pq_sendint64(&buf, (int64)num);
+  PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 
 /*****************************************************************************
@@ -171,6 +296,18 @@ varint64_cmp_internal(const int64_t a, const int64_t b) {
 }
 
 
+
+static int
+varuint64_cmp_internal(const uint64_t a, const uint64_t b) {
+  if (a < b)
+    return -1;
+  if (a > b)
+    return 1;
+  return 0;
+}
+
+
+
 PG_FUNCTION_INFO_V1(varint64_lt);
 Datum
 varint64_lt(PG_FUNCTION_ARGS) {
@@ -182,6 +319,21 @@ varint64_lt(PG_FUNCTION_ARGS) {
 
   PG_RETURN_BOOL(varint64_cmp_internal(lhs, rhs) < 0);
 }
+
+
+
+PG_FUNCTION_INFO_V1(varuint64_lt);
+Datum
+varuint64_lt(PG_FUNCTION_ARGS) {
+  struct varlena *lhs_var = PG_GETARG_VARLENA_PP(0);
+  struct varlena *rhs_var = PG_GETARG_VARLENA_PP(1);
+
+  uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
+  uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) < 0);
+}
+
 
 
 PG_FUNCTION_INFO_V1(varint64_le);
@@ -197,6 +349,21 @@ varint64_le(PG_FUNCTION_ARGS) {
 }
 
 
+
+PG_FUNCTION_INFO_V1(varuint64_le);
+Datum
+varuint64_le(PG_FUNCTION_ARGS) {
+  struct varlena *lhs_var = PG_GETARG_VARLENA_PP(0);
+  struct varlena *rhs_var = PG_GETARG_VARLENA_PP(1);
+
+  uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
+  uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) <= 0);
+}
+
+
+
 PG_FUNCTION_INFO_V1(varint64_eq);
 Datum
 varint64_eq(PG_FUNCTION_ARGS) {
@@ -208,6 +375,21 @@ varint64_eq(PG_FUNCTION_ARGS) {
 
   PG_RETURN_BOOL(varint64_cmp_internal(lhs, rhs) == 0);
 }
+
+
+
+PG_FUNCTION_INFO_V1(varuint64_eq);
+Datum
+varuint64_eq(PG_FUNCTION_ARGS) {
+  struct varlena *lhs_var = PG_GETARG_VARLENA_PP(0);
+  struct varlena *rhs_var = PG_GETARG_VARLENA_PP(1);
+
+  uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
+  uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) == 0);
+}
+
 
 
 PG_FUNCTION_INFO_V1(varint64_ne);
@@ -223,6 +405,21 @@ varint64_ne(PG_FUNCTION_ARGS) {
 }
 
 
+
+PG_FUNCTION_INFO_V1(varuint64_ne);
+Datum
+varuint64_ne(PG_FUNCTION_ARGS) {
+  struct varlena *lhs_var = PG_GETARG_VARLENA_PP(0);
+  struct varlena *rhs_var = PG_GETARG_VARLENA_PP(1);
+
+  uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
+  uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) != 0);
+}
+
+
+
 PG_FUNCTION_INFO_V1(varint64_ge);
 Datum
 varint64_ge(PG_FUNCTION_ARGS) {
@@ -234,6 +431,21 @@ varint64_ge(PG_FUNCTION_ARGS) {
 
   PG_RETURN_BOOL(varint64_cmp_internal(lhs, rhs) >= 0);
 }
+
+
+
+PG_FUNCTION_INFO_V1(varuint64_ge);
+Datum
+varuint64_ge(PG_FUNCTION_ARGS) {
+  struct varlena *lhs_var = PG_GETARG_VARLENA_PP(0);
+  struct varlena *rhs_var = PG_GETARG_VARLENA_PP(1);
+
+  uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
+  uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) >= 0);
+}
+
 
 
 PG_FUNCTION_INFO_V1(varint64_gt);
@@ -249,6 +461,21 @@ varint64_gt(PG_FUNCTION_ARGS) {
 }
 
 
+
+PG_FUNCTION_INFO_V1(varuint64_gt);
+Datum
+varuint64_gt(PG_FUNCTION_ARGS) {
+  struct varlena *lhs_var = PG_GETARG_VARLENA_PP(0);
+  struct varlena *rhs_var = PG_GETARG_VARLENA_PP(1);
+
+  uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
+  uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  PG_RETURN_BOOL(varuint64_cmp_internal(lhs, rhs) > 0);
+}
+
+
+
 PG_FUNCTION_INFO_V1(varint64_cmp);
 Datum
 varint64_cmp(PG_FUNCTION_ARGS) {
@@ -259,6 +486,20 @@ varint64_cmp(PG_FUNCTION_ARGS) {
   int64_t rhs = varlena_varint64_to_int64(rhs_var);
 
   PG_RETURN_INT32(varint64_cmp_internal(lhs, rhs));
+}
+
+
+
+PG_FUNCTION_INFO_V1(varuint64_cmp);
+Datum
+varuint64_cmp(PG_FUNCTION_ARGS) {
+  struct varlena *lhs_var = PG_GETARG_VARLENA_PP(0);
+  struct varlena *rhs_var = PG_GETARG_VARLENA_PP(1);
+
+  uint64_t lhs = varlena_varuint64_to_uint64(lhs_var);
+  uint64_t rhs = varlena_varuint64_to_uint64(rhs_var);
+
+  PG_RETURN_INT32(varuint64_cmp_internal(lhs, rhs));
 }
 
 
@@ -274,6 +515,16 @@ int2_to_varint64(PG_FUNCTION_ARGS) {
 }
 
 
+PG_FUNCTION_INFO_V1(int2_to_varuint64);
+Datum
+int2_to_varuint64(PG_FUNCTION_ARGS) {
+  int16 in = PG_GETARG_INT16(0);
+
+  return uint64_to_varlena_varuint64((uint64_t)in);
+}
+
+
+
 PG_FUNCTION_INFO_V1(int4_to_varint64);
 Datum
 int4_to_varint64(PG_FUNCTION_ARGS) {
@@ -283,6 +534,17 @@ int4_to_varint64(PG_FUNCTION_ARGS) {
 }
 
 
+
+PG_FUNCTION_INFO_V1(int4_to_varuint64);
+Datum
+int4_to_varuint64(PG_FUNCTION_ARGS) {
+  int32 in = PG_GETARG_INT32(0);
+
+  return uint64_to_varlena_varuint64((uint64_t)in);
+}
+
+
+
 PG_FUNCTION_INFO_V1(int8_to_varint64);
 Datum
 int8_to_varint64(PG_FUNCTION_ARGS) {
@@ -290,6 +552,17 @@ int8_to_varint64(PG_FUNCTION_ARGS) {
 
   return int64_to_varlena_varint64((int64_t)in);
 }
+
+
+
+PG_FUNCTION_INFO_V1(int8_to_varuint64);
+Datum
+int8_to_varuint64(PG_FUNCTION_ARGS) {
+  uint64 in = PG_GETARG_INT64(0);
+
+  return uint64_to_varlena_varuint64((uint64_t)in);
+}
+
 
 
 PG_FUNCTION_INFO_V1(varint64_to_int2);
@@ -309,6 +582,25 @@ varint64_to_int2(PG_FUNCTION_ARGS) {
 }
 
 
+
+PG_FUNCTION_INFO_V1(varuint64_to_int2);
+Datum
+varuint64_to_int2(PG_FUNCTION_ARGS) {
+  struct varlena *var = PG_GETARG_VARLENA_PP(0);
+
+  uint64_t num = varlena_varuint64_to_uint64(var);
+  int16 result = (int16)num;
+  if ((uint64)result != num) {
+    ereport(ERROR,
+            (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+             errmsg("integer out of range")));
+  }
+
+  PG_RETURN_INT16((int16) result);
+}
+
+
+
 PG_FUNCTION_INFO_V1(varint64_to_int4);
 Datum
 varint64_to_int4(PG_FUNCTION_ARGS) {
@@ -326,6 +618,25 @@ varint64_to_int4(PG_FUNCTION_ARGS) {
 }
 
 
+
+PG_FUNCTION_INFO_V1(varuint64_to_int4);
+Datum
+varuint64_to_int4(PG_FUNCTION_ARGS) {
+  struct varlena *var = PG_GETARG_VARLENA_PP(0);
+
+  uint64_t num = varlena_varuint64_to_uint64(var);
+  int32 result = (int32)num;
+  if ((uint64)result != num) {
+    ereport(ERROR,
+            (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+             errmsg("integer out of range")));
+  }
+
+  PG_RETURN_INT32((int32) result);
+}
+
+
+
 PG_FUNCTION_INFO_V1(varint64_to_int8);
 Datum
 varint64_to_int8(PG_FUNCTION_ARGS) {
@@ -335,6 +646,24 @@ varint64_to_int8(PG_FUNCTION_ARGS) {
 }
 
 
+
+PG_FUNCTION_INFO_V1(varuint64_to_int8);
+Datum
+varuint64_to_int8(PG_FUNCTION_ARGS) {
+  struct varlena *var = PG_GETARG_VARLENA_PP(0);
+  uint64_t out;
+
+  out = varlena_varuint64_to_uint64(var);
+  /* FIXME: Not exactly true, but I don't want to risk wrap around */
+  if (out > INT64_MAX) {
+    ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+                    errmsg("value is out of range for type VARUINT64")));
+  }
+  PG_RETURN_INT64((int64) out);
+}
+
+
+
 PG_FUNCTION_INFO_V1(varint64_sizeof);
 Datum
 varint64_sizeof(PG_FUNCTION_ARGS) {
@@ -342,6 +671,7 @@ varint64_sizeof(PG_FUNCTION_ARGS) {
 
   PG_RETURN_INT32(VARSIZE_ANY(var));
 }
+
 
 
 PG_FUNCTION_INFO_V1(varint64_sizeof2);
