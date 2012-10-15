@@ -1,0 +1,9 @@
+<h1>Random Developer Notes</h1>
+<h2>Fossil Export</h2>
+<p>To export from <a href="http://www.fossil-scm.org/">fossil</a>
+to <code>git</code>:</p>
+<ol>
+  <li>Export from <a href="http://www.fossil-scm.org/">fossil</a>: <code>fs export --git | git fast-import</code></li>
+  <li>Reset head: <code>git reset HEAD</code></li>
+  <li>Push to github: <code>git push origin/trunk</code></li>
+</ol>
