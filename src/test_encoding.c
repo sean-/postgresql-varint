@@ -21,7 +21,6 @@
 #include "varint.h"
 
 
-
 typedef struct {
   int64_t num;
   size_t consumed;
@@ -38,7 +37,13 @@ typedef struct {
 
 
 
-int
+static int test_record_int32(const test_record_int64_t* rec);
+static int test_record_uint32(const test_record_uint64_t* rec);
+static int test_record_int64(const test_record_int64_t* rec);
+static int test_record_uint64(const test_record_uint64_t* rec);
+
+
+static int
 test_record_int32(const test_record_int64_t* rec) {
   const size_t buflen = 5;
   char buf[buflen];
@@ -79,7 +84,7 @@ test_record_int32(const test_record_int64_t* rec) {
 
 
 
-int
+static int
 test_record_uint32(const test_record_uint64_t* rec) {
   const size_t buflen = 5;
   char buf[buflen];
@@ -119,7 +124,7 @@ test_record_uint32(const test_record_uint64_t* rec) {
 
 
 
-int
+static int
 test_record_int64(const test_record_int64_t* rec) {
   const size_t buflen = 10;
   char buf[buflen];
@@ -158,8 +163,7 @@ test_record_int64(const test_record_int64_t* rec) {
 }
 
 
-
-int
+static int
 test_record_uint64(const test_record_uint64_t* rec) {
   const size_t buflen = 10;
   char buf[buflen];
