@@ -31,35 +31,6 @@ SELECT   '64'::VARINT64 >=    '64'::VARINT64 AS t;
 SELECT   '64'::VARINT64 >=    '63'::VARINT64 AS t;
 SELECT '1024'::VARINT64 >= '-4096'::VARINT64 AS t;
 
--- Basic type comparison tests for varuint64
-SELECT    '0'::VARUINT64 =    '64'::VARUINT64 AS f;
-SELECT   '64'::VARUINT64 =    '64'::VARUINT64 AS t;
-
-SELECT   '64'::VARUINT64 <>   '64'::VARUINT64 AS f;
-SELECT    '0'::VARUINT64 <>    '1'::VARUINT64 AS t;
-
-SELECT   '12'::VARUINT64 <    '13'::VARUINT64 AS t;
-SELECT   '32'::VARUINT64 <    '12'::VARUINT64 AS f;
-SELECT   '32'::VARUINT64 <    '32'::VARUINT64 AS f;
-SELECT   '32'::VARUINT64 <    '33'::VARUINT64 AS t;
-
-SELECT   '12'::VARUINT64 <=   '13'::VARUINT64 AS t;
-SELECT   '32'::VARUINT64 <=   '12'::VARUINT64 AS f;
-SELECT   '32'::VARUINT64 <=   '32'::VARUINT64 AS t;
-SELECT   '32'::VARUINT64 <=   '33'::VARUINT64 AS t;
-
-SELECT   '12'::VARUINT64 >    '13'::VARUINT64 AS f;
-SELECT   '32'::VARUINT64 >    '12'::VARUINT64 AS t;
-SELECT   '32'::VARUINT64 >    '32'::VARUINT64 AS f;
-SELECT   '32'::VARUINT64 >    '33'::VARUINT64 AS f;
-
-SELECT   '12'::VARUINT64 >=   '13'::VARUINT64 AS f;
-SELECT   '32'::VARUINT64 >=   '12'::VARUINT64 AS t;
-SELECT   '32'::VARUINT64 >=   '32'::VARUINT64 AS t;
-SELECT   '32'::VARUINT64 >=   '33'::VARUINT64 AS f;
-
-
-
 -- varint64 <=> {int2,int4,int8} conversion tests
 SELECT       '0'::VARINT64::INT2 AS "0";
 SELECT       '0'::INT2::VARINT64 AS "0";
@@ -94,42 +65,10 @@ SELECT   '9223372036854775808'::VARINT64::INT8 AS "ERROR: 9223372036854775808";
 SELECT  '-9223372036854775809'::INT8::VARINT64 AS "ERROR: -9223372036854775809";
 SELECT  '-9223372036854775809'::VARINT64::INT8 AS "ERROR: -9223372036854775809";
 
-
--- varuint64 <=> {int2,int4,int8} conversion tests
-SELECT       '0'::VARUINT64::INT2 AS "0";
-SELECT       '0'::INT2::VARUINT64 AS "0";
-SELECT   '32767'::INT2::VARUINT64 AS "32767";
-SELECT   '32767'::VARUINT64::INT2 AS "32767";
-SELECT   '32768'::INT2::VARUINT64 AS "ERROR: 32768";
-SELECT   '32768'::VARUINT64::INT2 AS "ERROR: 32768";
-
-SELECT            '0'::VARUINT64::INT4 AS "0";
-SELECT            '0'::INT4::VARUINT64 AS "0";
-SELECT   '2147483647'::INT4::VARUINT64 AS "2147483647";
-SELECT   '2147483647'::VARUINT64::INT4 AS "2147483647";
-SELECT   '2147483648'::INT4::VARUINT64 AS "ERROR: 2147483648";
-SELECT   '2147483648'::VARUINT64::INT4 AS "ERROR: 2147483648";
-
-SELECT                     '0'::VARUINT64::INT8 AS "0";
-SELECT                     '0'::INT8::VARUINT64 AS "0";
-SELECT   '9223372036854775807'::INT8::VARUINT64 AS "9223372036854775807";
-SELECT   '9223372036854775807'::VARUINT64::INT8 AS "9223372036854775807";
--- FIXME: The following shouldn't be an error, but is
-SELECT   '9223372036854775808'::INT8::VARUINT64 AS "ERROR: 9223372036854775808";
-SELECT   '9223372036854775808'::VARUINT64::INT8 AS "ERROR: 9223372036854775808";
-
 -- Implicit type conversion tests for varint64
 SELECT 1::INT2 + 1::VARINT64 AS "2";
 SELECT 2::INT2 + 2::VARINT64 AS "4";
 SELECT 3::INT2 + 3::VARINT64 AS "6";
-
--- Implicit type conversion tests for varuint64
-SELECT 10::INT2 + 10::VARUINT64 AS "20";
-SELECT 20::INT2 + 20::VARUINT64 AS "40";
-SELECT 30::INT2 + 30::VARUINT64 AS "60";
-
-
-
 
 -- Durable type comparison tests for varint64
 CREATE TABLE varint64_table(lhs VARINT64, rhs VARINT64);
@@ -209,74 +148,9 @@ SELECT * FROM varint64_table WHERE '123'::VARINT64 >  lhs;
 SELECT * FROM varint64_table WHERE '123'::VARINT64 <= lhs;
 SELECT * FROM varint64_table WHERE '123'::VARINT64 >= lhs;
 
-
--- Durable type comparison tests for varuint64
-CREATE TABLE varuint64_table(lhs VARUINT64, rhs VARUINT64);
-
--- Leading/trailing spaces using two or more spaces or tabs
-INSERT INTO varuint64_table VALUES('  127  ','  256');
-INSERT INTO varuint64_table VALUES('128  ','		4096');
-INSERT INTO varuint64_table VALUES('4096		','		-4096		');
-INSERT INTO varuint64_table VALUES('4567890123456789','4567890123456789');
-INSERT INTO varuint64_table VALUES('+4567890123456789','-4567890123456789');
-INSERT INTO varuint64_table VALUES('0',                    '0');
-INSERT INTO varuint64_table VALUES('0',                  '127');
-INSERT INTO varuint64_table VALUES('0',                  '128');
-INSERT INTO varuint64_table VALUES('0',                '16383');
-INSERT INTO varuint64_table VALUES('0',                '16384');
-INSERT INTO varuint64_table VALUES('0',              '2097151');
-INSERT INTO varuint64_table VALUES('0',              '2097152');
-INSERT INTO varuint64_table VALUES('0',            '268435455');
-INSERT INTO varuint64_table VALUES('0',            '268435456');
-INSERT INTO varuint64_table VALUES('0',          '34359738367');
-INSERT INTO varuint64_table VALUES('0',          '34359738368');
-INSERT INTO varuint64_table VALUES('0',        '4398046511103');
-INSERT INTO varuint64_table VALUES('0',        '4398046511104');
-INSERT INTO varuint64_table VALUES('0',      '562949953421311');
-INSERT INTO varuint64_table VALUES('0',      '562949953421312');
-INSERT INTO varuint64_table VALUES('0',    '72057594037927935');
-INSERT INTO varuint64_table VALUES('0',    '72057594037927936');
-INSERT INTO varuint64_table VALUES('0',  '9223372036854775807');
-INSERT INTO varuint64_table VALUES('0',  '9223372036854775808');
-INSERT INTO varuint64_table VALUES('0', '18446744073709551615');
-
--- Test bogus inputs
-INSERT INTO varuint64_table (lhs) VALUES ('  ');
-INSERT INTO varuint64_table (lhs) VALUES ('xxx');
-INSERT INTO varuint64_table (lhs) VALUES ('3908203590239580293850293850329485');
-INSERT INTO varuint64_table (lhs) VALUES ('-1204982019841029840928340329840934');
-INSERT INTO varuint64_table (lhs) VALUES ('- 123');
-INSERT INTO varuint64_table (lhs) VALUES ('  123  456 ');
-INSERT INTO varuint64_table (lhs) VALUES ('');
-
--- Test table IO
-SELECT * FROM varuint64_table;
-SELECT * FROM varuint64_table WHERE rhs =  '4567890123456789'::VARUINT64;
-SELECT * FROM varuint64_table WHERE rhs <> '4567890123456789'::VARUINT64;
-SELECT * FROM varuint64_table WHERE rhs < '4567890123456789'::VARUINT64;
-SELECT * FROM varuint64_table WHERE rhs > '4567890123456789'::VARUINT64;
-SELECT * FROM varuint64_table WHERE rhs <= '4567890123456789'::VARUINT64;
-SELECT * FROM varuint64_table WHERE rhs >= '4567890123456789'::VARUINT64;
-SELECT * FROM varuint64_table WHERE rhs <> '456'::VARUINT64;
-SELECT * FROM varuint64_table WHERE rhs <  '456'::VARUINT64;
-SELECT * FROM varuint64_table WHERE rhs >  '456'::VARUINT64;
-SELECT * FROM varuint64_table WHERE rhs <= '456'::VARUINT64;
-SELECT * FROM varuint64_table WHERE rhs >= '456'::VARUINT64;
-SELECT * FROM varuint64_table WHERE '123'::VARUINT64 =  lhs;
-SELECT * FROM varuint64_table WHERE '123'::VARUINT64 <> lhs;
-SELECT * FROM varuint64_table WHERE '123'::VARUINT64 <  lhs;
-SELECT * FROM varuint64_table WHERE '123'::VARUINT64 >  lhs;
-SELECT * FROM varuint64_table WHERE '123'::VARUINT64 <= lhs;
-SELECT * FROM varuint64_table WHERE '123'::VARUINT64 >= lhs;
-
-
 -- And now for the punchline: test the encoded sizes of various bits
 SELECT rhs, pg_column_size(rhs) FROM varint64_table WHERE lhs = '-1' ORDER BY rhs ASC;
 
--- And now for the punchline: test the encoded sizes of various bits
-SELECT rhs, pg_column_size(rhs) FROM varuint64_table WHERE lhs = '0' ORDER BY rhs ASC;
-
 -- Cleanup
 DROP TABLE varint64_table;
-DROP TABLE varuint64_table;
 DROP EXTENSION varint CASCADE;

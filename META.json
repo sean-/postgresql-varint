@@ -1,0 +1,46 @@
+{
+  "name": "varint",
+  "generated_by": "Sean Chittenden",
+  "maintainer": "Sean Chittenden <sean@chittenden.org>",
+  "license": "postgresql",
+  "provides": {
+    "varint": {
+      "abstract": "A signed and unsigned 64 bit integer encoding scheme that saves disk space",
+      "docfile": "README",
+      "version": "0.1.0"
+    }
+  },
+  "prereqs": {
+    "runtime": {
+      "requires": {
+        "PostgreSQL": "9.0.0"
+      },
+      "recommends": {
+        "PostgreSQL": "9.2.1"
+      }
+    }
+  },
+  "resources": {
+    "bugtracker": {
+      "web": "https://github.com/sean-/postgresql-varint/issues"
+    },
+    "repository": {
+      "url":  "git://github.com/sean-/postgresql-varint.git",
+      "web":  "https://github.com/sean-/postgresql-varint",
+      "type": "git"
+    }
+  },
+  "tags": [
+    "varint",
+    "varuint",
+    "varint64",
+    "varuint64",
+    "variable width integer encoding"
+  ],
+  "abstract": "A signed and unsigned 64 bit integer encoding scheme that saves disk space",
+  "description": "Provides two data types VARINT64 and VARUINT64 that can be used to store integers in a space efficient manner. Instead of consuming 8 bytes per integer, VARINT64 and VARUINT64 will store the same number in as few as 2 bytes.",
+  "meta-spec": {
+    "version": "1.0.0",
+    "url": "http://pgxn.org/meta/spec.txt"
+  }
+}

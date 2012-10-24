@@ -1,0 +1,632 @@
+CREATE EXTENSION varint;
+-- Basic type comparison tests for varuint64
+SELECT    '0'::VARUINT64 =    '64'::VARUINT64 AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT   '64'::VARUINT64 =    '64'::VARUINT64 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT   '64'::VARUINT64 <>   '64'::VARUINT64 AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT    '0'::VARUINT64 <>    '1'::VARUINT64 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT   '12'::VARUINT64 <    '13'::VARUINT64 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT   '32'::VARUINT64 <    '12'::VARUINT64 AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT   '32'::VARUINT64 <    '32'::VARUINT64 AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT   '32'::VARUINT64 <    '33'::VARUINT64 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT   '12'::VARUINT64 <=   '13'::VARUINT64 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT   '32'::VARUINT64 <=   '12'::VARUINT64 AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT   '32'::VARUINT64 <=   '32'::VARUINT64 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT   '32'::VARUINT64 <=   '33'::VARUINT64 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT   '12'::VARUINT64 >    '13'::VARUINT64 AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT   '32'::VARUINT64 >    '12'::VARUINT64 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT   '32'::VARUINT64 >    '32'::VARUINT64 AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT   '32'::VARUINT64 >    '33'::VARUINT64 AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT   '12'::VARUINT64 >=   '13'::VARUINT64 AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT   '32'::VARUINT64 >=   '12'::VARUINT64 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT   '32'::VARUINT64 >=   '32'::VARUINT64 AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT   '32'::VARUINT64 >=   '33'::VARUINT64 AS f;
+ f 
+---
+ f
+(1 row)
+
+-- varuint64 <=> {int2,int4,int8} conversion tests
+SELECT       '0'::VARUINT64::INT2 AS "0";
+ 0 
+---
+ 0
+(1 row)
+
+SELECT       '0'::INT2::VARUINT64 AS "0";
+ 0 
+---
+ 0
+(1 row)
+
+SELECT   '32767'::INT2::VARUINT64 AS "32767";
+ 32767 
+-------
+ 32767
+(1 row)
+
+SELECT   '32767'::VARUINT64::INT2 AS "32767";
+ 32767 
+-------
+ 32767
+(1 row)
+
+SELECT   '32768'::INT2::VARUINT64 AS "ERROR: 32768";
+ERROR:  value "32768" is out of range for type smallint
+LINE 1: SELECT   '32768'::INT2::VARUINT64 AS "ERROR: 32768";
+                 ^
+SELECT   '32768'::VARUINT64::INT2 AS "ERROR: 32768";
+ERROR:  integer out of range
+SELECT            '0'::VARUINT64::INT4 AS "0";
+ 0 
+---
+ 0
+(1 row)
+
+SELECT            '0'::INT4::VARUINT64 AS "0";
+ 0 
+---
+ 0
+(1 row)
+
+SELECT   '2147483647'::INT4::VARUINT64 AS "2147483647";
+ 2147483647 
+------------
+ 2147483647
+(1 row)
+
+SELECT   '2147483647'::VARUINT64::INT4 AS "2147483647";
+ 2147483647 
+------------
+ 2147483647
+(1 row)
+
+SELECT   '2147483648'::INT4::VARUINT64 AS "ERROR: 2147483648";
+ERROR:  value "2147483648" is out of range for type integer
+LINE 1: SELECT   '2147483648'::INT4::VARUINT64 AS "ERROR: 2147483648...
+                 ^
+SELECT   '2147483648'::VARUINT64::INT4 AS "ERROR: 2147483648";
+ERROR:  integer out of range
+SELECT                     '0'::VARUINT64::INT8 AS "0";
+ 0 
+---
+ 0
+(1 row)
+
+SELECT                     '0'::INT8::VARUINT64 AS "0";
+ 0 
+---
+ 0
+(1 row)
+
+SELECT   '9223372036854775807'::INT8::VARUINT64 AS "9223372036854775807";
+ 9223372036854775807 
+---------------------
+ 9223372036854775807
+(1 row)
+
+SELECT   '9223372036854775807'::VARUINT64::INT8 AS "9223372036854775807";
+ 9223372036854775807 
+---------------------
+ 9223372036854775807
+(1 row)
+
+-- FIXME: The following shouldn't be an error, but is
+SELECT   '9223372036854775808'::INT8::VARUINT64 AS "ERROR: 9223372036854775808";
+ERROR:  value "9223372036854775808" is out of range for type bigint
+LINE 1: SELECT   '9223372036854775808'::INT8::VARUINT64 AS "ERROR: 9...
+                 ^
+SELECT   '9223372036854775808'::VARUINT64::INT8 AS "ERROR: 9223372036854775808";
+ERROR:  value "9223372036854775808" is out of range for type bigint
+LINE 1: SELECT   '9223372036854775808'::VARUINT64::INT8 AS "ERROR: 9...
+                 ^
+-- Implicit type conversion tests for varuint64
+SELECT 10::INT2 + 10::VARUINT64 AS "20";
+ 20 
+----
+ 20
+(1 row)
+
+SELECT 20::INT2 + 20::VARUINT64 AS "40";
+ 40 
+----
+ 40
+(1 row)
+
+SELECT 30::INT2 + 30::VARUINT64 AS "60";
+ 60 
+----
+ 60
+(1 row)
+
+-- Durable type comparison tests for varuint64
+CREATE TABLE varuint64_table(lhs VARUINT64, rhs VARUINT64);
+-- Leading/trailing spaces using two or more spaces or tabs
+INSERT INTO varuint64_table VALUES('  127  ','  256');
+INSERT INTO varuint64_table VALUES('128  ','		4096');
+INSERT INTO varuint64_table VALUES('4096		','		-4096		');
+ERROR:  value is out of range for type VARUINT64
+LINE 1: INSERT INTO varuint64_table VALUES('4096  ','  -4096  ');
+                                                    ^
+INSERT INTO varuint64_table VALUES('4567890123456789','4567890123456789');
+INSERT INTO varuint64_table VALUES('+4567890123456789','-4567890123456789');
+ERROR:  value is out of range for type VARUINT64
+LINE 1: ...T INTO varuint64_table VALUES('+4567890123456789','-45678901...
+                                                             ^
+INSERT INTO varuint64_table VALUES('0',                    '0');
+INSERT INTO varuint64_table VALUES('0',                  '127');
+INSERT INTO varuint64_table VALUES('0',                  '128');
+INSERT INTO varuint64_table VALUES('0',                '16383');
+INSERT INTO varuint64_table VALUES('0',                '16384');
+INSERT INTO varuint64_table VALUES('0',              '2097151');
+INSERT INTO varuint64_table VALUES('0',              '2097152');
+INSERT INTO varuint64_table VALUES('0',            '268435455');
+INSERT INTO varuint64_table VALUES('0',            '268435456');
+INSERT INTO varuint64_table VALUES('0',          '34359738367');
+INSERT INTO varuint64_table VALUES('0',          '34359738368');
+INSERT INTO varuint64_table VALUES('0',        '4398046511103');
+INSERT INTO varuint64_table VALUES('0',        '4398046511104');
+INSERT INTO varuint64_table VALUES('0',      '562949953421311');
+INSERT INTO varuint64_table VALUES('0',      '562949953421312');
+INSERT INTO varuint64_table VALUES('0',    '72057594037927935');
+INSERT INTO varuint64_table VALUES('0',    '72057594037927936');
+INSERT INTO varuint64_table VALUES('0',  '9223372036854775807');
+INSERT INTO varuint64_table VALUES('0',  '9223372036854775808');
+ERROR:  value "9223372036854775808" is out of range for type bigint
+LINE 1: INSERT INTO varuint64_table VALUES('0',  '922337203685477580...
+                                                 ^
+INSERT INTO varuint64_table VALUES('0', '18446744073709551615');
+ERROR:  value "18446744073709551615" is out of range for type bigint
+LINE 1: INSERT INTO varuint64_table VALUES('0', '1844674407370955161...
+                                                ^
+-- Test bogus inputs
+INSERT INTO varuint64_table (lhs) VALUES ('  ');
+ERROR:  invalid input syntax for integer: "  "
+LINE 1: INSERT INTO varuint64_table (lhs) VALUES ('  ');
+                                                  ^
+INSERT INTO varuint64_table (lhs) VALUES ('xxx');
+ERROR:  invalid input syntax for integer: "xxx"
+LINE 1: INSERT INTO varuint64_table (lhs) VALUES ('xxx');
+                                                  ^
+INSERT INTO varuint64_table (lhs) VALUES ('3908203590239580293850293850329485');
+ERROR:  value "3908203590239580293850293850329485" is out of range for type bigint
+LINE 1: INSERT INTO varuint64_table (lhs) VALUES ('39082035902395802...
+                                                  ^
+INSERT INTO varuint64_table (lhs) VALUES ('-1204982019841029840928340329840934');
+ERROR:  value "-1204982019841029840928340329840934" is out of range for type bigint
+LINE 1: INSERT INTO varuint64_table (lhs) VALUES ('-1204982019841029...
+                                                  ^
+INSERT INTO varuint64_table (lhs) VALUES ('- 123');
+ERROR:  invalid input syntax for integer: "- 123"
+LINE 1: INSERT INTO varuint64_table (lhs) VALUES ('- 123');
+                                                  ^
+INSERT INTO varuint64_table (lhs) VALUES ('  123  456 ');
+ERROR:  invalid input syntax for integer: "  123  456 "
+LINE 1: INSERT INTO varuint64_table (lhs) VALUES ('  123  456 ');
+                                                  ^
+INSERT INTO varuint64_table (lhs) VALUES ('');
+ERROR:  invalid input syntax for integer: ""
+LINE 1: INSERT INTO varuint64_table (lhs) VALUES ('');
+                                                  ^
+-- Test table IO
+SELECT * FROM varuint64_table;
+       lhs        |         rhs         
+------------------+---------------------
+ 127              | 256
+ 128              | 4096
+ 4567890123456789 | 4567890123456789
+ 0                | 0
+ 0                | 127
+ 0                | 128
+ 0                | 16383
+ 0                | 16384
+ 0                | 2097151
+ 0                | 2097152
+ 0                | 268435455
+ 0                | 268435456
+ 0                | 34359738367
+ 0                | 34359738368
+ 0                | 4398046511103
+ 0                | 4398046511104
+ 0                | 562949953421311
+ 0                | 562949953421312
+ 0                | 72057594037927935
+ 0                | 72057594037927936
+ 0                | 9223372036854775807
+(21 rows)
+
+SELECT * FROM varuint64_table WHERE rhs =  '4567890123456789'::VARUINT64;
+       lhs        |       rhs        
+------------------+------------------
+ 4567890123456789 | 4567890123456789
+(1 row)
+
+SELECT * FROM varuint64_table WHERE rhs <> '4567890123456789'::VARUINT64;
+ lhs |         rhs         
+-----+---------------------
+ 127 | 256
+ 128 | 4096
+ 0   | 0
+ 0   | 127
+ 0   | 128
+ 0   | 16383
+ 0   | 16384
+ 0   | 2097151
+ 0   | 2097152
+ 0   | 268435455
+ 0   | 268435456
+ 0   | 34359738367
+ 0   | 34359738368
+ 0   | 4398046511103
+ 0   | 4398046511104
+ 0   | 562949953421311
+ 0   | 562949953421312
+ 0   | 72057594037927935
+ 0   | 72057594037927936
+ 0   | 9223372036854775807
+(20 rows)
+
+SELECT * FROM varuint64_table WHERE rhs < '4567890123456789'::VARUINT64;
+ lhs |       rhs       
+-----+-----------------
+ 127 | 256
+ 128 | 4096
+ 0   | 0
+ 0   | 127
+ 0   | 128
+ 0   | 16383
+ 0   | 16384
+ 0   | 2097151
+ 0   | 2097152
+ 0   | 268435455
+ 0   | 268435456
+ 0   | 34359738367
+ 0   | 34359738368
+ 0   | 4398046511103
+ 0   | 4398046511104
+ 0   | 562949953421311
+ 0   | 562949953421312
+(17 rows)
+
+SELECT * FROM varuint64_table WHERE rhs > '4567890123456789'::VARUINT64;
+ lhs |         rhs         
+-----+---------------------
+ 0   | 72057594037927935
+ 0   | 72057594037927936
+ 0   | 9223372036854775807
+(3 rows)
+
+SELECT * FROM varuint64_table WHERE rhs <= '4567890123456789'::VARUINT64;
+       lhs        |       rhs        
+------------------+------------------
+ 127              | 256
+ 128              | 4096
+ 4567890123456789 | 4567890123456789
+ 0                | 0
+ 0                | 127
+ 0                | 128
+ 0                | 16383
+ 0                | 16384
+ 0                | 2097151
+ 0                | 2097152
+ 0                | 268435455
+ 0                | 268435456
+ 0                | 34359738367
+ 0                | 34359738368
+ 0                | 4398046511103
+ 0                | 4398046511104
+ 0                | 562949953421311
+ 0                | 562949953421312
+(18 rows)
+
+SELECT * FROM varuint64_table WHERE rhs >= '4567890123456789'::VARUINT64;
+       lhs        |         rhs         
+------------------+---------------------
+ 4567890123456789 | 4567890123456789
+ 0                | 72057594037927935
+ 0                | 72057594037927936
+ 0                | 9223372036854775807
+(4 rows)
+
+SELECT * FROM varuint64_table WHERE rhs <> '456'::VARUINT64;
+       lhs        |         rhs         
+------------------+---------------------
+ 127              | 256
+ 128              | 4096
+ 4567890123456789 | 4567890123456789
+ 0                | 0
+ 0                | 127
+ 0                | 128
+ 0                | 16383
+ 0                | 16384
+ 0                | 2097151
+ 0                | 2097152
+ 0                | 268435455
+ 0                | 268435456
+ 0                | 34359738367
+ 0                | 34359738368
+ 0                | 4398046511103
+ 0                | 4398046511104
+ 0                | 562949953421311
+ 0                | 562949953421312
+ 0                | 72057594037927935
+ 0                | 72057594037927936
+ 0                | 9223372036854775807
+(21 rows)
+
+SELECT * FROM varuint64_table WHERE rhs <  '456'::VARUINT64;
+ lhs | rhs 
+-----+-----
+ 127 | 256
+ 0   | 0
+ 0   | 127
+ 0   | 128
+(4 rows)
+
+SELECT * FROM varuint64_table WHERE rhs >  '456'::VARUINT64;
+       lhs        |         rhs         
+------------------+---------------------
+ 128              | 4096
+ 4567890123456789 | 4567890123456789
+ 0                | 16383
+ 0                | 16384
+ 0                | 2097151
+ 0                | 2097152
+ 0                | 268435455
+ 0                | 268435456
+ 0                | 34359738367
+ 0                | 34359738368
+ 0                | 4398046511103
+ 0                | 4398046511104
+ 0                | 562949953421311
+ 0                | 562949953421312
+ 0                | 72057594037927935
+ 0                | 72057594037927936
+ 0                | 9223372036854775807
+(17 rows)
+
+SELECT * FROM varuint64_table WHERE rhs <= '456'::VARUINT64;
+ lhs | rhs 
+-----+-----
+ 127 | 256
+ 0   | 0
+ 0   | 127
+ 0   | 128
+(4 rows)
+
+SELECT * FROM varuint64_table WHERE rhs >= '456'::VARUINT64;
+       lhs        |         rhs         
+------------------+---------------------
+ 128              | 4096
+ 4567890123456789 | 4567890123456789
+ 0                | 16383
+ 0                | 16384
+ 0                | 2097151
+ 0                | 2097152
+ 0                | 268435455
+ 0                | 268435456
+ 0                | 34359738367
+ 0                | 34359738368
+ 0                | 4398046511103
+ 0                | 4398046511104
+ 0                | 562949953421311
+ 0                | 562949953421312
+ 0                | 72057594037927935
+ 0                | 72057594037927936
+ 0                | 9223372036854775807
+(17 rows)
+
+SELECT * FROM varuint64_table WHERE '123'::VARUINT64 =  lhs;
+ lhs | rhs 
+-----+-----
+(0 rows)
+
+SELECT * FROM varuint64_table WHERE '123'::VARUINT64 <> lhs;
+       lhs        |         rhs         
+------------------+---------------------
+ 127              | 256
+ 128              | 4096
+ 4567890123456789 | 4567890123456789
+ 0                | 0
+ 0                | 127
+ 0                | 128
+ 0                | 16383
+ 0                | 16384
+ 0                | 2097151
+ 0                | 2097152
+ 0                | 268435455
+ 0                | 268435456
+ 0                | 34359738367
+ 0                | 34359738368
+ 0                | 4398046511103
+ 0                | 4398046511104
+ 0                | 562949953421311
+ 0                | 562949953421312
+ 0                | 72057594037927935
+ 0                | 72057594037927936
+ 0                | 9223372036854775807
+(21 rows)
+
+SELECT * FROM varuint64_table WHERE '123'::VARUINT64 <  lhs;
+       lhs        |       rhs        
+------------------+------------------
+ 127              | 256
+ 128              | 4096
+ 4567890123456789 | 4567890123456789
+(3 rows)
+
+SELECT * FROM varuint64_table WHERE '123'::VARUINT64 >  lhs;
+ lhs |         rhs         
+-----+---------------------
+ 0   | 0
+ 0   | 127
+ 0   | 128
+ 0   | 16383
+ 0   | 16384
+ 0   | 2097151
+ 0   | 2097152
+ 0   | 268435455
+ 0   | 268435456
+ 0   | 34359738367
+ 0   | 34359738368
+ 0   | 4398046511103
+ 0   | 4398046511104
+ 0   | 562949953421311
+ 0   | 562949953421312
+ 0   | 72057594037927935
+ 0   | 72057594037927936
+ 0   | 9223372036854775807
+(18 rows)
+
+SELECT * FROM varuint64_table WHERE '123'::VARUINT64 <= lhs;
+       lhs        |       rhs        
+------------------+------------------
+ 127              | 256
+ 128              | 4096
+ 4567890123456789 | 4567890123456789
+(3 rows)
+
+SELECT * FROM varuint64_table WHERE '123'::VARUINT64 >= lhs;
+ lhs |         rhs         
+-----+---------------------
+ 0   | 0
+ 0   | 127
+ 0   | 128
+ 0   | 16383
+ 0   | 16384
+ 0   | 2097151
+ 0   | 2097152
+ 0   | 268435455
+ 0   | 268435456
+ 0   | 34359738367
+ 0   | 34359738368
+ 0   | 4398046511103
+ 0   | 4398046511104
+ 0   | 562949953421311
+ 0   | 562949953421312
+ 0   | 72057594037927935
+ 0   | 72057594037927936
+ 0   | 9223372036854775807
+(18 rows)
+
+-- And now for the punchline: test the encoded sizes of various bits
+SELECT rhs, pg_column_size(rhs) FROM varuint64_table WHERE lhs = '0' ORDER BY rhs ASC;
+         rhs         | pg_column_size 
+---------------------+----------------
+ 0                   |              2
+ 127                 |              2
+ 128                 |              3
+ 16383               |              3
+ 16384               |              4
+ 2097151             |              4
+ 2097152             |              5
+ 268435455           |              5
+ 268435456           |              6
+ 34359738367         |              6
+ 34359738368         |              7
+ 4398046511103       |              7
+ 4398046511104       |              8
+ 562949953421311     |              8
+ 562949953421312     |              9
+ 72057594037927935   |              9
+ 72057594037927936   |             10
+ 9223372036854775807 |             10
+(18 rows)
+
+-- Cleanup
+DROP TABLE varuint64_table;
+DROP EXTENSION varint CASCADE;

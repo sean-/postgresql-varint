@@ -1,6 +1,7 @@
 .git/
 *.o
 *.so
-src/regression.*
-src/results/*.out
+regression.*
+results/
+sql/varint--?.?.?.sql
 src/test_encoding
