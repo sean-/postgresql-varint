@@ -2,11 +2,13 @@
   "name": "varint",
   "generated_by": "Sean Chittenden",
   "maintainer": "Sean Chittenden <sean@chittenden.org>",
+  "version": "0.1.0",
   "license": "postgresql",
   "provides": {
     "varint": {
       "abstract": "A signed and unsigned 64 bit integer encoding scheme that saves disk space",
       "docfile": "README",
+      "file": "sql/varint.sql",
       "version": "0.1.0"
     }
   },
