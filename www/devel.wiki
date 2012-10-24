@@ -6,4 +6,8 @@ to <code>git</code>:</p>
   <li>Export from <a href="http://www.fossil-scm.org/">fossil</a>: <code>fs export --git | git fast-import</code></li>
   <li>Reset head: <code>git reset HEAD</code></li>
   <li>Push to github: <code>git push origin/trunk</code></li>
+  <li>Create an archive: <code>git archive --format tar --prefix=varint-0.1.0/ --output ~/tmp/varint-0.1.0.tar trunk<br/>
+git archive --format zip --prefix=varint-0.1.0/ --output ~/tmp/varint-0.1.0.zip trunk</code></li>
+  <li>Compress away: <code>xz -9k ~/tmp/varint-0.1.0.tar && bzip2 -9 ~/tmp/varint-0.1.0.tar</code></li>
+  <li>Upload .zip file to <a href="https://manager.pgxn.org/upload">PGXN</a>.</li>
 </ol>
